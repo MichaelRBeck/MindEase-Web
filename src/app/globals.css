@@ -1,26 +1,265 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;700&display=swap');
+
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --radius-lg: var(--radius);
 }
 
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg-main: #F4F4F9;
+    --bg-card: #FFFFFF;
+    --text-primary: #2C3E50;
+    --text-secondary: #546E7A;
+    --text-muted: #78909C;
+    --brand-primary: #005A9C;
+    --brand-primary-hover: #004C8C;
+    --brand-primary-light: #E1F5FE;
+    --success: #2E7D32;
+    --success-bg: #E8F5E9;
+    --warning: #FFBF00;
+    --warning-bg: #FFF8E1;
+    --error: #C62828;
+    --error-bg: #FFEBEE;
+
+    --background: 244 2% 96%;
+    --foreground: 210 24% 24%;
+    --card: 0 0% 100%;
+    --card-foreground: 210 24% 24%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 24% 24%;
+    --primary: 205 100% 31%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 200 11% 50%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 200 16% 56%;
+    --muted-foreground: 200 16% 56%;
+    --accent: 205 100% 31%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 68% 46%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 205 100% 31%;
+    --radius: 1rem;
+
+    /* ✅ MindEase defaults (JS sobrescreve) */
+    --me-font-scale: 1;
+    --me-line-height: 1.5;
+    --me-space: 1;
+
+    /* ✅ spacing tokens "prontos" (fallback) */
+    --me-card-padding: 1.5rem;
+    --me-card-padding-md: 2rem;
+    --me-interactive-padding: 1.5rem;
+
+    --me-input-py: 0.75rem;
+    --me-input-px: 1rem;
+
+    --me-btn-py: 0.75rem;
+    --me-btn-px-primary: 2rem;
+    --me-btn-px-secondary: 2rem;
+    --me-btn-px-ghost: 1.5rem;
+  }
+
+  * {
+    @apply border-border motion-reduce:transition-none motion-reduce:animate-none;
+  }
+
+  html {
+    font-size: calc(16px * var(--me-font-scale));
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Nunito', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    line-height: var(--me-line-height);
+    font-size: 1rem;
+  }
+
+  html[data-animations="off"] * {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  html[data-focus="on"] .focus-hidden {
+    display: none !important;
+  }
+
+  html[data-focus="on"] .app-content {
+    padding-left: 0 !important;
+  }
+
+  /* ✅ High contrast */
+  html[data-contrast="high"] {
+    /* texto mais escuro e mais legível */
+    --foreground: 210 45% 12%;
+    --muted-foreground: 210 20% 25%;
+
+    /* bordas mais visíveis */
+    --border: 205 80% 35%;
+    --input: 205 80% 35%;
+
+    /* opcional: fundo levemente mais claro/limpo */
+    --background: 0 0% 100%;
+  }
+
+  /* ✅ Force animations off */
+  html[data-animations="off"] *,
+  html[data-animations="off"] *::before,
+  html[data-animations="off"] *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-bold;
+  }
+
+  /* ✅ NÃO usar leading-relaxed (isso quebrava o slider) */
+  p {
+    line-height: var(--me-line-height);
+  }
+
+  [data-debug-wrapper="true"] {
+    display: contents !important;
+  }
+
+  [data-debug-wrapper="true"]>* {
+    margin-left: inherit;
+    margin-right: inherit;
+    margin-top: inherit;
+    margin-bottom: inherit;
+    padding-left: inherit;
+    padding-right: inherit;
+    padding-top: inherit;
+    padding-bottom: inherit;
+    column-gap: inherit;
+    row-gap: inherit;
+    gap: inherit;
+    border-left-width: inherit;
+    border-right-width: inherit;
+    border-top-width: inherit;
+    border-bottom-width: inherit;
+    border-left-style: inherit;
+    border-right-style: inherit;
+    border-top-style: inherit;
+    border-bottom-style: inherit;
+    border-left-color: inherit;
+    border-right-color: inherit;
+    border-top-color: inherit;
+    border-bottom-color: inherit;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .btn-primary {
+    @apply bg-[#005A9C] hover:bg-[#004C8C] text-white rounded-full font-bold transition-transform active:scale-95 shadow-md hover:shadow-lg;
+    padding-top: var(--me-btn-py);
+    padding-bottom: var(--me-btn-py);
+    padding-left: var(--me-btn-px-primary);
+    padding-right: var(--me-btn-px-primary);
+  }
+
+  .btn-secondary {
+    @apply bg-white border-2 border-[#005A9C] text-[#005A9C] hover:bg-[#E1F5FE] rounded-full font-bold transition-colors;
+    padding-top: var(--me-btn-py);
+    padding-bottom: var(--me-btn-py);
+    padding-left: var(--me-btn-px-secondary);
+    padding-right: var(--me-btn-px-secondary);
+  }
+
+  .btn-ghost {
+    @apply text-[#2C3E50] hover:bg-slate-100 rounded-full font-medium transition-colors;
+    padding-top: var(--me-btn-py);
+    padding-bottom: var(--me-btn-py);
+    padding-left: var(--me-btn-px-ghost);
+    padding-right: var(--me-btn-px-ghost);
+  }
+
+  .card {
+    @apply bg-card text-card-foreground rounded-3xl shadow-sm border border-border;
+    padding: var(--me-card-padding);
+  }
+
+  @media (min-width: 768px) {
+    .card {
+      padding: var(--me-card-padding-md);
+    }
+  }
+
+  .card-interactive {
+    @apply bg-card text-card-foreground rounded-3xl border border-border shadow-sm transition-all duration-300 cursor-pointer;
+    padding: var(--me-interactive-padding);
+  }
+
+  .input-field {
+    @apply bg-card text-foreground border-2 border-input rounded-xl outline-none w-full transition-all placeholder:text-muted-foreground focus:ring-4 focus:ring-ring/20 focus:border-ring;
+    padding-top: var(--me-input-py);
+    padding-bottom: var(--me-input-py);
+    padding-left: var(--me-input-px);
+    padding-right: var(--me-input-px);
+  }
+
+  .btn-primary {
+    @apply bg-primary text-primary-foreground rounded-full font-bold shadow-md hover:shadow-lg transition-transform active:scale-95;
+    padding-top: var(--me-btn-py);
+    padding-bottom: var(--me-btn-py);
+    padding-left: var(--me-btn-px-primary);
+    padding-right: var(--me-btn-px-primary);
+  }
+
+  .btn-secondary {
+    @apply bg-card border-2 border-primary text-primary rounded-full font-bold transition-colors hover:bg-accent/10;
+    padding-top: var(--me-btn-py);
+    padding-bottom: var(--me-btn-py);
+    padding-left: var(--me-btn-px-secondary);
+    padding-right: var(--me-btn-px-secondary);
+  }
+
+  .btn-ghost {
+    @apply text-foreground rounded-full font-medium transition-colors hover:bg-muted;
+    padding-top: var(--me-btn-py);
+    padding-bottom: var(--me-btn-py);
+    padding-left: var(--me-btn-px-ghost);
+    padding-right: var(--me-btn-px-ghost);
+  }
 }
