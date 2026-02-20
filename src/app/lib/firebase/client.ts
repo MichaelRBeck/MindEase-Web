@@ -26,10 +26,6 @@ function readClientConfig(): FirebaseClientConfig | null {
 }
 
 export function getFirebaseClientApp(): FirebaseApp {
-    if (typeof window === "undefined") {
-        throw new Error("Firebase client accessed on server (should be client-only).");
-    }
-
     if (getApps().length) return getApp();
 
     const cfg = readClientConfig();
