@@ -6,6 +6,8 @@ import { makeAuthTasksPreloadedState } from "@/app/lib/ssr/makeAuthTasksPreloade
 
 import { DashboardPage } from "@/features/dashboard/presentation/pages/DashboardPage";
 
+export const dynamic = "force-dynamic";
+
 export default async function Page() {
     // Busca o usuário direto no servidor (SSR)
     const user = await getServerUser();
