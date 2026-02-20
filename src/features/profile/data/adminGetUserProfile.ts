@@ -1,7 +1,7 @@
 import "server-only";
 import type { UserProfile } from "@/features/profile/domain/userProfile";
 import { DEFAULT_USER_PROFILE } from "@/features/profile/domain/userProfile";
-import { adminDb } from "@/app/lib/firebase/admin";
+import { getAdminDb } from "@/app/lib/firebase/admin";
 
 
 //Busca o perfil do usuário diretamente no Firestore via Admin SDK (SSR).
@@ -10,6 +10,8 @@ import { adminDb } from "@/app/lib/firebase/admin";
 //Se existir parcialmente preenchido, faz merge com os defaults
 
 export async function adminGetUserProfile(uid: string): Promise<UserProfile> {
+    const adminDb = getAdminDb();
+
     const ref = adminDb
         .collection("users")
         .doc(uid)

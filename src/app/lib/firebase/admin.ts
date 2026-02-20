@@ -11,14 +11,13 @@ function getPrivateKey() {
 }
 
 // Inicializa o Firebase Admin só uma vez (evita múltiplas instâncias)
-function getAdminApp(): App {
+export function getAdminApp(): App {
     if (getApps().length) return getApps()[0]!;
 
     const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
     const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
     const privateKey = getPrivateKey();
 
-    // Garante que as variáveis obrigatórias existem
     if (!projectId || !clientEmail || !privateKey) {
         throw new Error("Firebase Admin env vars ausentes (FIREBASE_ADMIN_*)");
     }
@@ -33,10 +32,11 @@ function getAdminApp(): App {
 }
 
 // App Admin compartilhado no server
-export const firebaseAdminApp = getAdminApp();
+export function getAdminAuth() {
+    return getAuth(getAdminApp());
+}
 
 // Auth Admin (verificação de sessão, etc.)
-export const adminAuth = getAuth(firebaseAdminApp);
-
-// Firestore Admin (acesso total no servidor)
-export const adminDb = getFirestore(firebaseAdminApp);
+export function getAdminDb() {
+    return getFirestore(getAdminApp());
+}

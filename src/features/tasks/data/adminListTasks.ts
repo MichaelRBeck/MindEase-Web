@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import "server-only";
 import type { Task, TaskStatus } from "@/features/tasks/domain/task";
-import { adminDb } from "@/app/lib/firebase/admin";
+import { getAdminDb } from "@/app/lib/firebase/admin";
 
 // Garante que o status vindo do banco sempre seja válido
 function normalizeStatus(s: unknown): TaskStatus {
@@ -10,6 +10,8 @@ function normalizeStatus(s: unknown): TaskStatus {
 
 export async function adminListTasks(uid: string): Promise<Task[]> {
     // Busca tarefas do usuário já ordenadas por atualização (mais recentes primeiro)
+    const adminDb = getAdminDb();
+
     const snap = await adminDb
         .collection("users")
         .doc(uid)

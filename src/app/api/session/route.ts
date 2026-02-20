@@ -1,7 +1,7 @@
 import "server-only";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { adminAuth } from "@/app/lib/firebase/admin";
+import { getAdminAuth } from "@/app/lib/firebase/admin";
 
 const COOKIE_NAME = "__session";
 
@@ -17,6 +17,7 @@ export async function POST(req: Request) {
     const expiresIn = 1 * 24 * 60 * 60 * 1000;
 
     // Gera session cookie seguro no servidor
+    const adminAuth = getAdminAuth();
     const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
 
     const cookieStore = await cookies();
@@ -37,7 +38,6 @@ export async function POST(req: Request) {
 export async function DELETE() {
     const cookieStore = await cookies();
 
-    // Zera o cookie para invalidar a sessão
     cookieStore.set(COOKIE_NAME, "", {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",

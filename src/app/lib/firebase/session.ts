@@ -1,6 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
-import { adminAuth } from "./admin";
+import { getAdminAuth } from "./admin";
 
 // Nome do cookie pode ser customizado por env
 const COOKIE_NAME = process.env.AUTH_COOKIE_NAME ?? "mindease_session";
@@ -15,6 +15,7 @@ export async function getServerUser() {
 
     try {
         // Verifica o session cookie e retorna dados básicos do usuário
+        const adminAuth = getAdminAuth();
         const decoded = await adminAuth.verifySessionCookie(session, true);
 
         return {
