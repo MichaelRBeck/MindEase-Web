@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Task, TaskStatus } from "@/features/tasks/domain/task";
 import type { TasksRepository } from "@/features/tasks/domain/tasksRepository";
 import { demoTasks } from "@/features/tasks/data/demoData";

@@ -10,11 +10,10 @@ const FOCUS_DURATION_OPTIONS: readonly number[] = [2, 10, 15, 25, 30, 45] as con
 
 export function ProfilePage() {
     const { user } = useAuth();
-    const uid = user?.uid;
-    if (!uid) return null;
+    const uid = user?.uid ?? null;
 
     // Repo do perfil (carrega/salva as preferências do usuário)
-    const repo = React.useMemo(() => makeUserProfileRepository(uid), [uid]);
+    const repo = React.useMemo(() => (uid ? makeUserProfileRepository(uid) : null), [uid]);
 
     const [draft, setDraft] = React.useState<UserProfile>(DEFAULT_USER_PROFILE);
     const [hydrated, setHydrated] = React.useState(false);
@@ -22,20 +21,34 @@ export function ProfilePage() {
 
     // Carrega o perfil salvo ao entrar na página
     React.useEffect(() => {
+        if (!repo) {
+            setDraft(DEFAULT_USER_PROFILE);
+            setHydrated(false);
+            return;
+        }
+
+        let alive = true;
+
         (async () => {
             const stored = await repo.load();
+            if (!alive) return;
             setDraft(stored ?? DEFAULT_USER_PROFILE);
             setHydrated(true);
         })();
+
+        return () => {
+            alive = false;
+        };
     }, [repo]);
 
-    // Atualiza o rascunho do perfil sem salvar ainda
     function update(patch: Partial<UserProfile>) {
         setDraft((prev) => ({ ...prev, ...patch, updatedAt: Date.now() }));
     }
 
     // Salva o perfil e avisa o app pra re-hidratar onde precisar
     async function handleSave() {
+        if (!repo) return;
+
         const next: UserProfile = { ...draft, updatedAt: Date.now() };
         await repo.save(next);
         emitProfileUpdated();
@@ -46,6 +59,8 @@ export function ProfilePage() {
 
     // Restaura as configurações padrão
     async function handleRestoreDefaults() {
+        if (!repo) return;
+
         await repo.save(DEFAULT_USER_PROFILE);
         setDraft(DEFAULT_USER_PROFILE);
 
@@ -54,6 +69,8 @@ export function ProfilePage() {
         setStatusMsg("Padrões restaurados.");
         window.setTimeout(() => setStatusMsg(null), 4000);
     }
+
+    if (!uid) return null;
 
     if (!hydrated) {
         return (

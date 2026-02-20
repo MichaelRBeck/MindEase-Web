@@ -7,19 +7,25 @@ import { useAuth } from "@/features/auth/presentation/AuthProvider";
 type Mode = "login" | "signup";
 
 // Conversor de erros do Firebase para texto mais amigável
+type FirebaseLikeError = {
+    message?: string;
+    code?: string;
+};
+
 function friendlyFirebaseError(err: unknown) {
-    const msg = (err as any)?.message as string | undefined;
-    const code = (err as any)?.code as string | undefined;
+    const e = err as FirebaseLikeError;
+    const msg = e.message;
+    const code = e.code;
 
     switch (code) {
         case "auth/invalid-email":
-            return "E-mail inválido.";
+            return "Email inválido.";
         case "auth/user-not-found":
         case "auth/wrong-password":
         case "auth/invalid-credential":
-            return "E-mail ou senha incorretos.";
+            return "Email ou senha incorretos.";
         case "auth/email-already-in-use":
-            return "Este e-mail já está em uso.";
+            return "Esse email já está em uso.";
         case "auth/weak-password":
             return "Senha fraca. Use pelo menos 6 caracteres.";
         case "auth/network-request-failed":
@@ -33,7 +39,6 @@ export function AuthPage() {
     const router = useRouter();
     // Vem do AuthProvider, funções pra login e cadastro
     const { signIn, signUp } = useAuth();
-    const { status, signOut } = useAuth();
 
     // Define se a tela está em login ou cadastro
     const [mode, setMode] = React.useState<Mode>("login");
@@ -94,7 +99,7 @@ export function AuthPage() {
             }
 
             router.replace("/dashboard");
-        } catch (err: unknown) {
+        } catch (err) {
             setFormError(friendlyFirebaseError(err));
         } finally {
             setLoading(false);

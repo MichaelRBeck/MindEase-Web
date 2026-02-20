@@ -19,6 +19,7 @@ export function usePomodoroTimer(config: PomodoroConfig) {
     // Atualiza a ref e reseta quando a config muda
     useEffect(() => {
         configRef.current = config;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setState((prev) => resetPomodoro(prev, config));
     }, [config]);
 

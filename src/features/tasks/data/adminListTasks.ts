@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import "server-only";
 import type { Task, TaskStatus } from "@/features/tasks/domain/task";
 import { adminDb } from "@/app/lib/firebase/admin";

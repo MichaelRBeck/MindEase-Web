@@ -53,6 +53,7 @@ export function TransitionProvider({ children }: { children: React.ReactNode }) 
         }, duration);
     };
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     const value = useMemo(() => ({ show, dismiss, current }), [current]);
 
     return <TransitionContext.Provider value={value}>{children}</TransitionContext.Provider>;
