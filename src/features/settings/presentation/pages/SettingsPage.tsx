@@ -55,7 +55,7 @@ export function SettingsPage() {
                         <div className="flex flex-col sm:flex-row gap-4">
                             <button type="button" onClick={handleOpenProfile} className="btn-secondary flex items-center gap-2">
                                 <User className="w-4 h-4" aria-hidden="true" />
-                                Perfil (mock)
+                                Perfil
                             </button>
 
                             <button
@@ -67,15 +67,6 @@ export function SettingsPage() {
                                 <LogOut className="w-4 h-4" aria-hidden="true" />
                                 Sair
                             </button>
-                        </div>
-
-                        <div className="bg-white/60 border border-slate-100 rounded-2xl p-4">
-                            <p className="text-sm text-[#546E7A] leading-relaxed">
-                                <span className="inline-flex items-center gap-2">
-                                    <Lightbulb className="w-4 h-4" aria-hidden="true" />
-                                    Depois dá pra conectar login/logout e dados do perfil no Firebase.
-                                </span>
-                            </p>
                         </div>
                     </section>
 
