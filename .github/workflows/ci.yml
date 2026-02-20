@@ -7,38 +7,29 @@ on:
     branches: [main]
 
 jobs:
-  ci:
+  checks:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
 
-      - name: Install
-        run: npm ci
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Unit tests
-        run: npm test
-
-      - name: Debug env presence (no values)
-        run: |
-          node -e "console.log('API_KEY set?', !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY)"
-          node -e "console.log('AUTH_DOMAIN set?', !!process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN)"
-          node -e "console.log('PROJECT_ID set?', !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID)"
-          node -e "console.log('APP_ID set?', !!process.env.NEXT_PUBLIC_FIREBASE_APP_ID)"
-
+  build:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
       - name: Build
         run: npm run build
         env:
