@@ -10,7 +10,7 @@ import {
     setPersistence,
     browserSessionPersistence,
 } from "firebase/auth";
-import { firebaseAuth } from "@/app/lib/firebase/client";
+import { getFirebaseAuth } from "@/app/lib/firebase/client";
 import { useAppDispatch } from "@/store/hooks";
 import { setAuthState } from "@/features/auth/presentation/store/authSlice";
 import { clearTasks } from "@/features/tasks/presentation/store/tasksSlice";
@@ -47,6 +47,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = React.useState<User | null>(null);
     const [status, setStatus] = React.useState<AuthStatus>("loading");
     const dispatch = useAppDispatch();
+
+    const firebaseAuth = React.useMemo(() => getFirebaseAuth(), []);
 
     React.useEffect(() => {
         let alive = true;

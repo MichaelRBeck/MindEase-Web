@@ -1,7 +1,7 @@
 import type { UserProfile } from "@/features/profile/domain/userProfile";
 import type { UserProfileRepository } from "@/features/profile/domain/userProfileRepository";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { firestore } from "@/app/lib/firebase/client";
+import { getClientFirestore } from "@/app/lib/firebase/client";
 
 //Implementaçãodo repositório de perfil usando Firestore, responsável por carregar e persistir o perfil do usuário autenticado.
 export class FirebaseUserProfileRepository implements UserProfileRepository {
@@ -14,6 +14,7 @@ export class FirebaseUserProfileRepository implements UserProfileRepository {
 
     // Referência padronizada: users/{uid}/profile/main
     private ref() {
+        const firestore = getClientFirestore();
         return doc(firestore, "users", this.uid, "profile", "main");
     }
 

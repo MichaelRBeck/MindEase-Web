@@ -1,7 +1,7 @@
 import type { CognitivePreferences } from "@/features/cognitive/domain/preferences";
 import type { CognitivePreferencesRepository } from "@/features/cognitive/domain/preferencesRepository";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { firestore } from "@/app/lib/firebase/client";
+import { getClientFirestore } from "@/app/lib/firebase/client";
 
 // Implementação concreta do repositório usando Firestore (lado client)
 export class FirebaseCognitivePreferencesRepository implements CognitivePreferencesRepository {
@@ -14,6 +14,7 @@ export class FirebaseCognitivePreferencesRepository implements CognitivePreferen
 
     // Referência do documento: users/{uid}/cognitivePreferences/main
     private ref() {
+        const firestore = getClientFirestore();
         return doc(firestore, "users", this.uid, "cognitivePreferences", "main");
     }
 

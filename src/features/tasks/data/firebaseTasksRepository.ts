@@ -13,7 +13,7 @@ import {
     query,
     orderBy,
 } from "firebase/firestore";
-import { firestore } from "@/app/lib/firebase/client";
+import { getClientFirestore } from "@/app/lib/firebase/client";
 
 type CreateTaskInput = Omit<Task, "createdAt" | "updatedAt" | "id">;
 type UpdateTaskPatch = Partial<Omit<Task, "createdAt" | "id">>;
@@ -28,6 +28,7 @@ export class FirebaseTasksRepository implements TasksRepository {
 
     // Collection: users/{uid}/tasks
     private colRef() {
+        const firestore = getClientFirestore();
         return collection(firestore, "users", this.uid, "tasks");
     }
 
