@@ -3,11 +3,8 @@
 import * as React from "react";
 import { DEFAULT_USER_PROFILE, type UserProfile } from "@/features/profile/domain/userProfile";
 import { useAuth } from "@/features/auth/presentation/AuthProvider";
-import {
-    makeUserProfileRepository,
-    emitProfileUpdated,
-} from "@/features/profile/data/userProfileRepositoryFactory";
-
+import { makeUserProfileRepository, emitProfileUpdated } from "@/features/profile/data/userProfileRepositoryFactory";
+import { Info, CheckCircle2, RotateCcw } from "lucide-react";
 
 const FOCUS_DURATION_OPTIONS: readonly number[] = [2, 10, 15, 25, 30, 45] as const;
 
@@ -15,12 +12,15 @@ export function ProfilePage() {
     const { user } = useAuth();
     const uid = user?.uid;
     if (!uid) return null;
+
+    // Repo do perfil (carrega/salva as preferências do usuário)
     const repo = React.useMemo(() => makeUserProfileRepository(uid), [uid]);
 
     const [draft, setDraft] = React.useState<UserProfile>(DEFAULT_USER_PROFILE);
     const [hydrated, setHydrated] = React.useState(false);
     const [statusMsg, setStatusMsg] = React.useState<string | null>(null);
 
+    // Carrega o perfil salvo ao entrar na página
     React.useEffect(() => {
         (async () => {
             const stored = await repo.load();
@@ -29,26 +29,29 @@ export function ProfilePage() {
         })();
     }, [repo]);
 
+    // Atualiza o rascunho do perfil sem salvar ainda
     function update(patch: Partial<UserProfile>) {
         setDraft((prev) => ({ ...prev, ...patch, updatedAt: Date.now() }));
     }
 
+    // Salva o perfil e avisa o app pra re-hidratar onde precisar
     async function handleSave() {
         const next: UserProfile = { ...draft, updatedAt: Date.now() };
         await repo.save(next);
         emitProfileUpdated();
 
-        setStatusMsg("Perfil salvo ✅");
+        setStatusMsg("Perfil salvo.");
         window.setTimeout(() => setStatusMsg(null), 4000);
     }
 
+    // Restaura as configurações padrão
     async function handleRestoreDefaults() {
         await repo.save(DEFAULT_USER_PROFILE);
         setDraft(DEFAULT_USER_PROFILE);
 
         emitProfileUpdated();
 
-        setStatusMsg("Padrões restaurados 🌸");
+        setStatusMsg("Padrões restaurados.");
         window.setTimeout(() => setStatusMsg(null), 4000);
     }
 
@@ -71,12 +74,15 @@ export function ProfilePage() {
                 </header>
 
                 {statusMsg && (
-                    <div role="status" className="bg-[#E8F5E9] border border-[#2E7D32]/20 rounded-2xl p-4 text-sm text-[#2C3E50]">
-                        {statusMsg}
+                    <div
+                        role="status"
+                        className="bg-[#E8F5E9] border border-[#2E7D32]/20 rounded-2xl p-4 text-sm text-[#2C3E50] flex items-center gap-2"
+                    >
+                        <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
+                        <span>{statusMsg}</span>
                     </div>
                 )}
 
-                {/* 1) Identidade */}
                 <section className="card space-y-4" aria-label="Identidade do usuário">
                     <div>
                         <h2 className="text-xl font-bold text-[#2C3E50] mb-2">Usuário</h2>
@@ -94,7 +100,6 @@ export function ProfilePage() {
                     </label>
                 </section>
 
-                {/* 2) Perfil de navegação */}
                 <section className="card space-y-4" aria-label="Perfil de navegação">
                     <div>
                         <h2 className="text-xl font-bold text-[#2C3E50] mb-2">Perfil de navegação</h2>
@@ -106,7 +111,9 @@ export function ProfilePage() {
                         <select
                             className="input-field mt-2"
                             value={draft.navigationProfile}
-                            onChange={(e) => update({ navigationProfile: e.target.value as UserProfile["navigationProfile"] })}
+                            onChange={(e) =>
+                                update({ navigationProfile: e.target.value as UserProfile["navigationProfile"] })
+                            }
                         >
                             <option value="simple">Simples</option>
                             <option value="guided">Guiado</option>
@@ -115,12 +122,11 @@ export function ProfilePage() {
                     </label>
                 </section>
 
-                {/* 3) Necessidades específicas */}
                 <section className="card space-y-4" aria-label="Necessidades específicas">
                     <div>
                         <h2 className="text-xl font-bold text-[#2C3E50] mb-2">Necessidades específicas</h2>
                         <p className="text-sm text-[#546E7A]">
-                            Essas opções agora influenciam o <strong>Painel Cognitivo</strong> e a interface
+                            Essas opções influenciam o <strong>Painel Cognitivo</strong> e a interface
                         </p>
                     </div>
 
@@ -151,7 +157,9 @@ export function ProfilePage() {
                             <input
                                 type="checkbox"
                                 checked={draft.needs.highContrastPreferred}
-                                onChange={(e) => update({ needs: { ...draft.needs, highContrastPreferred: e.target.checked } })}
+                                onChange={(e) =>
+                                    update({ needs: { ...draft.needs, highContrastPreferred: e.target.checked } })
+                                }
                             />
                             <span className="text-sm text-[#2C3E50]">Preferir alto contraste</span>
                         </label>
@@ -160,24 +168,29 @@ export function ProfilePage() {
                             <input
                                 type="checkbox"
                                 checked={draft.needs.gentleReminders}
-                                onChange={(e) => update({ needs: { ...draft.needs, gentleReminders: e.target.checked } })}
+                                onChange={(e) =>
+                                    update({ needs: { ...draft.needs, gentleReminders: e.target.checked } })
+                                }
                             />
                             <span className="text-sm text-[#2C3E50]">Lembretes gentis (alertas cognitivos)</span>
                         </label>
                     </div>
 
                     <div className="bg-[#E1F5FE] border border-[#005A9C]/20 rounded-2xl p-4">
-                        <p className="text-sm text-[#2C3E50] leading-relaxed">
-                            💡 Depois de salvar, vá ao <strong>Painel Cognitivo</strong> e veja: contraste, modo resumo, animações e alertas se ajustando automaticamente.
+                        <p className="text-sm text-[#2C3E50] leading-relaxed flex items-start gap-2">
+                            <Info className="w-4 h-4 mt-0.5" aria-hidden="true" />
+                            <span>
+                                Depois de salvar, vá ao <strong>Painel Cognitivo</strong> e veja contraste, modo resumo, animações e
+                                alertas se ajustando automaticamente.
+                            </span>
                         </p>
                     </div>
                 </section>
 
-                {/* 4) Rotina */}
                 <section className="card space-y-4" aria-label="Rotina">
                     <div>
                         <h2 className="text-xl font-bold text-[#2C3E50] mb-2">Rotina de estudo/trabalho</h2>
-                        <p className="text-sm text-[#546E7A]">Define defaults do Timer (salvo)</p>
+                        <p className="text-sm text-[#546E7A]">Define padrões do Timer (salvo)</p>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -186,7 +199,9 @@ export function ProfilePage() {
                             <select
                                 className="input-field mt-2"
                                 value={draft.routine.workOrStudy}
-                                onChange={(e) => update({ routine: { ...draft.routine, workOrStudy: e.target.value as "work" | "study" } })}
+                                onChange={(e) =>
+                                    update({ routine: { ...draft.routine, workOrStudy: e.target.value as "work" | "study" } })
+                                }
                             >
                                 <option value="study">Estudo</option>
                                 <option value="work">Trabalho</option>
@@ -199,7 +214,12 @@ export function ProfilePage() {
                                 className="input-field mt-2"
                                 value={draft.routine.preferredPeriod}
                                 onChange={(e) =>
-                                    update({ routine: { ...draft.routine, preferredPeriod: e.target.value as UserProfile["routine"]["preferredPeriod"] } })
+                                    update({
+                                        routine: {
+                                            ...draft.routine,
+                                            preferredPeriod: e.target.value as UserProfile["routine"]["preferredPeriod"],
+                                        },
+                                    })
                                 }
                             >
                                 <option value="morning">Manhã</option>
@@ -213,7 +233,9 @@ export function ProfilePage() {
                             <select
                                 className="input-field mt-2"
                                 value={draft.routine.preferredFocusMinutes}
-                                onChange={(e) => update({ routine: { ...draft.routine, preferredFocusMinutes: Number(e.target.value) } })}
+                                onChange={(e) =>
+                                    update({ routine: { ...draft.routine, preferredFocusMinutes: Number(e.target.value) } })
+                                }
                             >
                                 {FOCUS_DURATION_OPTIONS.map((m) => (
                                     <option key={m} value={m}>
@@ -230,14 +252,17 @@ export function ProfilePage() {
                                 type="number"
                                 min={1}
                                 value={draft.routine.sessionsPerDayGoal}
-                                onChange={(e) => update({ routine: { ...draft.routine, sessionsPerDayGoal: Number(e.target.value) || 1 } })}
+                                onChange={(e) =>
+                                    update({ routine: { ...draft.routine, sessionsPerDayGoal: Number(e.target.value) || 1 } })
+                                }
                             />
                         </label>
                     </div>
                 </section>
 
                 <div className="flex flex-col sm:flex-row gap-3 justify-end">
-                    <button type="button" className="btn-secondary" onClick={handleRestoreDefaults}>
+                    <button type="button" className="btn-secondary flex items-center gap-2" onClick={handleRestoreDefaults}>
+                        <RotateCcw className="w-4 h-4" aria-hidden="true" />
                         Restaurar padrões
                     </button>
                     <button type="button" className="btn-primary" onClick={() => void handleSave()}>

@@ -1,3 +1,4 @@
+// Tipos simplificados usados apenas para dados de demonstração
 export type TaskStatus = "todo" | "doing" | "done";
 export type TaskPriority = "low" | "medium" | "high";
 
@@ -9,6 +10,7 @@ export type DemoTask = {
     priority: TaskPriority;
 };
 
+// Conjunto fixo de tarefas para mock / fallback visual
 export const demoTasks: DemoTask[] = [
     {
         id: "1",
@@ -47,11 +49,18 @@ export const demoTasks: DemoTask[] = [
     },
 ];
 
+// Filtra tarefas por coluna (simula comportamento do Kanban)
 export function getDemoTasksByStatus(status: TaskStatus): DemoTask[] {
     return demoTasks.filter((task) => task.status === status);
 }
 
-export function getDemoTasksCount(): { total: number; todo: number; doing: number; done: number } {
+// Retorna contagem simples para cards/resumo do dashboard
+export function getDemoTasksCount(): {
+    total: number;
+    todo: number;
+    doing: number;
+    done: number;
+} {
     return {
         total: demoTasks.length,
         todo: demoTasks.filter((t) => t.status === "todo").length,

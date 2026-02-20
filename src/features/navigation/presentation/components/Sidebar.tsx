@@ -5,28 +5,29 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCognitive } from "@/features/cognitive/presentation/CognitiveProvider";
 import { useUserProfile } from "@/features/profile/presentation/hooks/useUserProfile";
+import { Brain, Home, ListTodo, Timer, User, Settings } from "lucide-react";
 
 type NavItem = {
     path: string;
     label: string;
-    icon: string;
     shortLabel?: string;
+    Icon: React.ComponentType<{ className?: string }>;
 };
 
 const NAV_ITEMS: readonly NavItem[] = [
-    { path: "/dashboard", label: "Dashboard", shortLabel: "Home", icon: "🏠" },
-    { path: "/panel", label: "Cognitive Panel", shortLabel: "Panel", icon: "🧠" },
-    { path: "/tasks", label: "Tasks", shortLabel: "Tasks", icon: "📋" },
-    { path: "/timer", label: "Timer", shortLabel: "Timer", icon: "⏱️" },
-    { path: "/profile", label: "Profile", shortLabel: "Profile", icon: "👤" },
-    { path: "/settings", label: "Settings", shortLabel: "Settings", icon: "⚙️" },
+    { path: "/dashboard", label: "Início", shortLabel: "Início", Icon: Home },
+    { path: "/panel", label: "Painel cognitivo", shortLabel: "Painel", Icon: Brain },
+    { path: "/tasks", label: "Tarefas", shortLabel: "Tarefas", Icon: ListTodo },
+    { path: "/timer", label: "Timer", shortLabel: "Timer", Icon: Timer },
+    { path: "/profile", label: "Perfil", shortLabel: "Perfil", Icon: User },
+    { path: "/settings", label: "Configurações", shortLabel: "Ajustes", Icon: Settings },
 ] as const;
 
 function isActivePath(pathname: string, itemPath: string) {
     return pathname === itemPath;
 }
 
-// ✅ Opção A
+// Filtra itens de navegação dependendo do perfil
 function getNavItemsForProfile(profile: "simple" | "guided" | "power"): readonly NavItem[] {
     if (profile === "simple") {
         return NAV_ITEMS.filter((i) => ["/dashboard", "/tasks", "/timer", "/settings"].includes(i.path));
@@ -35,9 +36,9 @@ function getNavItemsForProfile(profile: "simple" | "guided" | "power"): readonly
 }
 
 function profileBadge(profile: "simple" | "guided" | "power") {
-    if (profile === "simple") return { text: "Simple Navigation", cls: "bg-[#E8F5E9] text-[#2E7D32]" };
-    if (profile === "guided") return { text: "Guided Navigation", cls: "bg-[#E1F5FE] text-[#005A9C]" };
-    return { text: "Power Navigation", cls: "bg-[#FFF8E1] text-[#8A6D00]" };
+    if (profile === "simple") return { text: "Navegação simples", cls: "bg-[#E8F5E9] text-[#2E7D32]" };
+    if (profile === "guided") return { text: "Navegação guiada", cls: "bg-[#E1F5FE] text-[#005A9C]" };
+    return { text: "Navegação avançada", cls: "bg-[#FFF8E1] text-[#8A6D00]" };
 }
 
 export function Sidebar() {
@@ -46,20 +47,20 @@ export function Sidebar() {
     const { profile } = useUserProfile();
 
     const navProfile = profile.navigationProfile;
-    const items = getNavItemsForProfile(navProfile); // ✅ sem hook
+    const items = getNavItemsForProfile(navProfile);
     const badge = profileBadge(navProfile);
 
     const useShortLabels = navProfile === "simple";
 
-    // Focus mode esconde sidebar
+    // Modo foco esconde a sidebar
     if (applied.focusMode) return null;
 
     return (
         <>
-            {/* Desktop Sidebar */}
+            {/* Sidebar web */}
             <nav
                 data-testid="desktop-navigation"
-                aria-label="Primary"
+                aria-label="Principal"
                 className={[
                     "hidden md:flex fixed left-0 top-0 h-screen w-64 backdrop-blur-xl border-r border-slate-100 p-6 flex-col gap-2 z-40",
                     navProfile === "simple" ? "bg-white" : "bg-white/80",
@@ -67,47 +68,43 @@ export function Sidebar() {
             >
                 <div className="mb-6">
                     <h2 className="text-2xl font-bold text-[#005A9C]">MindEase</h2>
-                    <p className="text-sm text-[#546E7A] mt-1">Your calm space</p>
+                    <p className="text-sm text-[#546E7A] mt-1">Seu espaço calmo</p>
 
-                    {/* ✅ Badge bem visível para o vídeo */}
                     <div className="mt-3">
                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${badge.cls}`}>
                             {badge.text}
                         </span>
                     </div>
 
-                    {/* ✅ Copy curta que explica a diferença (cognitiva) */}
                     <p className="text-xs text-[#546E7A] mt-2 leading-relaxed">
-                        {navProfile === "simple" && "Fewer options on screen to reduce overload."}
-                        {navProfile === "guided" && "Full navigation with gentle guidance."}
-                        {navProfile === "power" && "Full navigation + quick shortcuts."}
+                        {navProfile === "simple" && "Menos opções na tela para reduzir sobrecarga."}
+                        {navProfile === "guided" && "Navegação completa com orientação leve."}
+                        {navProfile === "power" && "Navegação completa + atalhos rápidos."}
                     </p>
                 </div>
 
-                {/* ✅ Quick actions (Power) */}
                 {navProfile === "power" && (
                     <div className="mb-4 rounded-2xl border border-slate-100 bg-white p-3">
-                        <p className="text-xs font-bold text-[#2C3E50] mb-2">Quick actions</p>
+                        <p className="text-xs font-bold text-[#2C3E50] mb-2">Ações rápidas</p>
                         <div className="flex flex-col gap-2">
                             <Link className="btn-secondary text-left" href="/tasks">
-                                + Add task
+                                + Adicionar tarefa
                             </Link>
                             <Link className="btn-secondary text-left" href="/timer">
-                                Start timer
+                                Iniciar timer
                             </Link>
                             <Link className="btn-ghost text-left" href="/panel">
-                                Adjust cognitive panel
+                                Ajustar painel cognitivo
                             </Link>
                         </div>
                     </div>
                 )}
 
-                {/* ✅ Guided hint */}
                 {navProfile === "guided" && (
                     <div className="mb-4 rounded-2xl border border-[#005A9C]/15 bg-[#E1F5FE] p-3">
-                        <p className="text-xs font-bold text-[#2C3E50]">Tip</p>
+                        <p className="text-xs font-bold text-[#2C3E50]">Dica</p>
                         <p className="text-xs text-[#546E7A] leading-relaxed mt-1">
-                            If it feels too much, switch to <strong>Simple</strong> and enable <strong>Focus Mode</strong>.
+                            Se ficar pesado, troque para <strong>Simples</strong> e ative o <strong>Modo foco</strong>.
                         </p>
                     </div>
                 )}
@@ -115,6 +112,7 @@ export function Sidebar() {
                 {items.map((item) => {
                     const active = isActivePath(pathname, item.path);
                     const label = useShortLabels ? item.shortLabel ?? item.label : item.label;
+                    const Icon = item.Icon;
 
                     return (
                         <Link
@@ -128,31 +126,28 @@ export function Sidebar() {
                                 navProfile === "simple" ? "text-sm" : "",
                             ].join(" ")}
                         >
-                            <span className="text-xl" aria-hidden="true">
-                                {item.icon}
-                            </span>
+                            <Icon className="w-5 h-5" aria-hidden="true" />
                             <span>{label}</span>
                         </Link>
                     );
                 })}
 
-                {/* ✅ Em Simple, deixa um “atalho seguro” pro Profile/Painel sem poluir menu */}
                 {navProfile === "simple" && (
                     <div className="mt-auto pt-4 border-t border-slate-100 space-y-2">
                         <Link href="/profile" className="btn-ghost text-left w-full">
-                            👤 Profile
+                            Perfil
                         </Link>
                         <Link href="/panel" className="btn-ghost text-left w-full">
-                            🧠 Cognitive Panel
+                            Painel cognitivo
                         </Link>
                     </div>
                 )}
             </nav>
 
-            {/* Mobile Bottom Navigation */}
+            {/* Navegação mobile */}
             <nav
                 data-testid="mobile-navigation"
-                aria-label="Primary"
+                aria-label="Principal"
                 className={[
                     "md:hidden fixed bottom-0 left-0 right-0 border-t border-slate-100 p-4 flex justify-around z-50",
                     navProfile === "simple" ? "bg-white" : "bg-white",
@@ -161,6 +156,7 @@ export function Sidebar() {
                 {items.map((item) => {
                     const active = isActivePath(pathname, item.path);
                     const label = useShortLabels ? item.shortLabel ?? item.label : item.label;
+                    const Icon = item.Icon;
 
                     return (
                         <Link
@@ -168,14 +164,11 @@ export function Sidebar() {
                             href={item.path}
                             data-testid={`nav-mobile-${item.label.toLowerCase()}`}
                             aria-current={active ? "page" : undefined}
-                            className={[
-                                "flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-colors",
-                                active ? "text-[#005A9C]" : "text-[#546E7A]",
-                            ].join(" ")}
+                            className={["flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-colors", active ? "text-[#005A9C]" : "text-[#546E7A]"].join(
+                                " "
+                            )}
                         >
-                            <span className="text-2xl" aria-hidden="true">
-                                {item.icon}
-                            </span>
+                            <Icon className="w-6 h-6" aria-hidden="true" />
                             <span className="text-xs font-medium">{label}</span>
                         </Link>
                     );

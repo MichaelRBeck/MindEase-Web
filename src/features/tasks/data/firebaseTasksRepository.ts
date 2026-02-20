@@ -25,25 +25,28 @@ type FirestoreTaskDTO = Task & {
 export class FirebaseTasksRepository implements TasksRepository {
     constructor(private readonly uid: string) { }
 
+    // Collection: users/{uid}/tasks
     private colRef() {
         return collection(firestore, "users", this.uid, "tasks");
     }
 
+    // Doc: users/{uid}/tasks/{id}
     private docRef(id: string) {
         return doc(this.colRef(), id);
     }
 
     async list(): Promise<Task[]> {
-        // ordena por createdAt (se seu app usa outro critério, troca aqui)
+        // Ordena por createdAt pra manter uma ordem previsível
         const q = query(this.colRef(), orderBy("createdAt", "asc"));
         const snap = await getDocs(q);
+
         return snap.docs.map((d) => d.data() as Task);
     }
 
     async create(input: CreateTaskInput): Promise<Task> {
         const now = Date.now();
 
-        // cria sem id
+        // Payload inicial sem id (id vem do addDoc)
         const payload: Omit<FirestoreTaskDTO, "id"> = {
             ...(input as Omit<Task, "id" | "createdAt" | "updatedAt">),
             createdAt: now,
@@ -59,7 +62,7 @@ export class FirebaseTasksRepository implements TasksRepository {
             updatedAt: now,
         };
 
-        // garante o id dentro do doc (se seu domínio depende disso)
+        // Garante que o id fique salvo dentro do documento também
         await updateDoc(this.docRef(created.id), { id: created.id });
 
         return task;
@@ -68,9 +71,11 @@ export class FirebaseTasksRepository implements TasksRepository {
     async update(id: string, patch: UpdateTaskPatch): Promise<Task> {
         const ref = this.docRef(id);
         const snap = await getDoc(ref);
+
         if (!snap.exists()) throw new Error("Task não encontrada");
 
         const prev = snap.data() as Task;
+
         const next: Task = {
             ...prev,
             ...(patch as Partial<Task>),
@@ -79,19 +84,20 @@ export class FirebaseTasksRepository implements TasksRepository {
             updatedAt: Date.now(),
         };
 
+        // merge:true pra atualizar só o que mudou
         await setDoc(ref, next, { merge: true });
+
         return next;
     }
 
     async move(id: string, toStatus: TaskStatus, toIndex: number): Promise<Task[]> {
+        // Move aqui é “patch” de status + order (ordem da coluna)
         await this.update(id, { status: toStatus, order: toIndex } as any);
         return this.list();
     }
 
-
-
-    // Se seu TasksRepository tiver delete/remove, mantém compatível:
     async remove(id: string): Promise<void> {
+        // Remove o doc do Firestore
         await deleteDoc(this.docRef(id));
     }
 }

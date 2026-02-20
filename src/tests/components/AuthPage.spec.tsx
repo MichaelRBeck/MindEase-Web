@@ -1,10 +1,9 @@
-import { screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { render } from "@testing-library/react";
 
 import { AuthPage } from "@/features/auth/presentation/pages/AuthPage";
 
-// ---- mocks ----
+// Mock do router do Next pra validar redirect sem navegar de verdade
 const replaceMock = jest.fn();
 
 jest.mock("next/navigation", () => ({
@@ -16,6 +15,7 @@ jest.mock("next/navigation", () => ({
     }),
 }));
 
+// Mock do AuthProvider pra controlar login/cadastro nos testes
 const signInMock = jest.fn();
 const signUpMock = jest.fn();
 const signOutMock = jest.fn();
@@ -25,7 +25,7 @@ jest.mock("@/features/auth/presentation/AuthProvider", () => ({
         signIn: signInMock,
         signUp: signUpMock,
         signOut: signOutMock,
-        status: "unauthenticated",
+        status: "anonymous", // status real do provider
         user: null,
     }),
 }));
@@ -44,7 +44,7 @@ describe("<AuthPage />", () => {
         expect(screen.getByTestId("auth-password-input")).toBeInTheDocument();
         expect(screen.getByTestId("auth-submit-btn")).toBeInTheDocument();
 
-        // no modo login, não aparece nome/confirm
+        // No modo login, não aparece nome/confirmar senha
         expect(screen.queryByTestId("auth-name-input")).not.toBeInTheDocument();
         expect(screen.queryByTestId("auth-confirm-password-input")).not.toBeInTheDocument();
     });
@@ -55,7 +55,7 @@ describe("<AuthPage />", () => {
 
         await user.click(screen.getByTestId("auth-submit-btn"));
 
-        expect(await screen.findByRole("alert")).toHaveTextContent(/please enter your email/i);
+        expect(await screen.findByRole("alert")).toHaveTextContent(/(digite|informe).*(e-?mail)/i);
         expect(signInMock).not.toHaveBeenCalled();
         expect(replaceMock).not.toHaveBeenCalled();
     });
@@ -80,10 +80,10 @@ describe("<AuthPage />", () => {
         const user = userEvent.setup();
         render(<AuthPage />);
 
-        // troca para signup
+        // Troca para cadastro
         await user.click(screen.getByTestId("auth-toggle-btn"));
 
-        // agora os campos aparecem
+        // Agora os campos aparecem
         expect(screen.getByTestId("auth-name-input")).toBeInTheDocument();
         expect(screen.getByTestId("auth-confirm-password-input")).toBeInTheDocument();
 
@@ -94,7 +94,9 @@ describe("<AuthPage />", () => {
 
         await user.click(screen.getByTestId("auth-submit-btn"));
 
-        expect(await screen.findByRole("alert")).toHaveTextContent(/passwords do not match/i);
+        expect(await screen.findByRole("alert")).toHaveTextContent(
+            /senhas.*(não (batem|coincidem|conferem)|diferentes)/i
+        );
         expect(signUpMock).not.toHaveBeenCalled();
         expect(replaceMock).not.toHaveBeenCalled();
     });

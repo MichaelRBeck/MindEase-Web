@@ -17,16 +17,19 @@ type AdviceItem = {
     tone: "info" | "success" | "warning";
 };
 
+// Label do status para exibir no dashboard
 function statusLabel(status: TaskStatus): string {
-    if (status === "todo") return "To Do";
-    if (status === "doing") return "Doing";
-    return "Done";
+    if (status === "todo") return "A fazer";
+    if (status === "doing") return "Em andamento";
+    return "Concluída";
 }
 
+// Garante que um número fica dentro de um intervalo
 function clamp(n: number, min: number, max: number) {
     return Math.max(min, Math.min(max, n));
 }
 
+// Texto curto tipo “há 5 min”
 function formatRelativeTime(ts: number): string {
     const diffMs = Date.now() - ts;
     if (!Number.isFinite(diffMs)) return "recentemente";
@@ -42,11 +45,13 @@ function formatRelativeTime(ts: number): string {
     return `há ${diffD} dia${diffD > 1 ? "s" : ""}`;
 }
 
+// Junta as tasks de todas as colunas do Kanban
 function getAllTasks(byStatus: Record<TaskStatus, Task[]>) {
     const all = [...(byStatus.todo ?? []), ...(byStatus.doing ?? []), ...(byStatus.done ?? [])];
     return all;
 }
 
+// Métricas rápidas para o modo detalhado
 function getTaskMetrics(allTasks: Task[]) {
     const highPriority = allTasks.filter((t) => t.priority === "high").length;
 
@@ -64,6 +69,7 @@ function getTaskMetrics(allTasks: Task[]) {
     return { highPriority, checklistTotal, checklistDone, checklistPending };
 }
 
+// Estilo por “tom” do conselho
 function toneClass(t: AdviceItem["tone"]) {
     return t === "success"
         ? "bg-[#E8F5E9] border-[#2E7D32]/20"
@@ -85,6 +91,7 @@ export function DashboardPage() {
     const [user, setUser] = React.useState<User | null>(null);
     const [showAlert, setShowAlert] = React.useState(false);
 
+    // Dados do Kanban
     const { byStatus, loading } = useTasksBoard();
     const taskStats = getCountsFromByStatus(byStatus);
 
@@ -99,7 +106,7 @@ export function DashboardPage() {
         return sorted.slice(0, 6);
     }, [allTasks]);
 
-    // “conselhos” simples (sem monitorar nada): só regras pelo estado atual
+    // Conselhos simples com base no estado atual do Kanban
     const advice = React.useMemo<AdviceItem[]>(() => {
         const items: AdviceItem[] = [];
 
@@ -107,7 +114,7 @@ export function DashboardPage() {
             items.push({
                 id: "ad-loading",
                 title: "Carregando tarefas",
-                hint: "Assim que carregar, vamos sugerir o próximo passo com base no seu Kanban.",
+                hint: "Assim que carregar, vou sugerir o próximo passo com base no seu Kanban.",
                 tone: "info",
             });
             return items;
@@ -117,7 +124,7 @@ export function DashboardPage() {
             items.push({
                 id: "ad-empty",
                 title: "Comece pequeno",
-                hint: "Crie 1 tarefa simples e mova para Doing quando for começar.",
+                hint: "Crie 1 tarefa simples e mova para Em andamento quando for começar.",
                 tone: "success",
             });
             items.push({
@@ -133,21 +140,21 @@ export function DashboardPage() {
             items.push({
                 id: "ad-no-doing",
                 title: "Escolha 1 tarefa para agora",
-                hint: "Mova uma tarefa de To Do para Doing para ter um foco claro.",
+                hint: "Mova uma tarefa de A fazer para Em andamento para ter um foco claro.",
                 tone: "warning",
             });
         } else if (taskStats.doing >= 2) {
             items.push({
                 id: "ad-many-doing",
                 title: "Poucas coisas em paralelo",
-                hint: "Se possível, mantenha 1 tarefa em Doing para reduzir sobrecarga.",
+                hint: "Se possível, mantenha 1 tarefa em Em andamento para reduzir sobrecarga.",
                 tone: "warning",
             });
         } else {
             items.push({
                 id: "ad-ok-doing",
                 title: "Bom foco",
-                hint: "Você tem 1 tarefa em Doing — ótimo para previsibilidade.",
+                hint: "Você tem 1 tarefa em Em andamento — ótimo para previsibilidade.",
                 tone: "success",
             });
         }
@@ -156,13 +163,13 @@ export function DashboardPage() {
             items.push({
                 id: "ad-big-todo",
                 title: "Lista grande? Simplifique",
-                hint: "Escolha 1 prioridade do To Do e ignore o resto por agora.",
+                hint: "Escolha 1 prioridade do A fazer e ignore o resto por agora.",
                 tone: "warning",
             });
         } else {
             items.push({
                 id: "ad-small-todo",
-                title: "To Do sob controle",
+                title: "A fazer sob controle",
                 hint: "Seu backlog parece enxuto. Continue com passos pequenos.",
                 tone: "success",
             });
@@ -204,6 +211,7 @@ export function DashboardPage() {
     }, [loading, taskStats.total, taskStats.todo, taskStats.doing, metrics.checklistPending, metrics.highPriority]);
 
     React.useEffect(() => {
+        // Simula carregamento de usuário (pode ser substituído por auth real)
         const loadUser = async () => {
             await new Promise((r) => setTimeout(r, 250));
             setUser({ name: "Minds" });
@@ -211,6 +219,7 @@ export function DashboardPage() {
 
         void loadUser();
 
+        // Alerta “gentil” depois de um tempo na tela
         const timer = window.setTimeout(() => setShowAlert(true), 10000);
         return () => window.clearTimeout(timer);
     }, []);
@@ -218,7 +227,7 @@ export function DashboardPage() {
     if (!user) {
         return (
             <div className="min-h-screen bg-[#F4F4F9] flex items-center justify-center">
-                <p className="text-[#546E7A]">Loading...</p>
+                <p className="text-[#546E7A]">Carregando...</p>
             </div>
         );
     }
@@ -228,20 +237,24 @@ export function DashboardPage() {
             <div className="card text-center space-y-6">
                 <h2 className="text-3xl font-bold text-[#2C3E50]">Qual é o seu foco hoje?</h2>
                 <p className="text-lg text-[#546E7A]">Comece com uma coisa por vez</p>
-                <button data-testid="dashboard-start-focus-btn" onClick={() => router.push("/timer")} className="btn-primary" type="button">
+                <button
+                    data-testid="dashboard-start-focus-btn"
+                    onClick={() => router.push("/timer")}
+                    className="btn-primary"
+                    type="button"
+                >
                     Iniciar sessão de foco
                 </button>
             </div>
 
             <div className="bg-white/60 border border-slate-100 rounded-2xl p-4">
                 <p className="text-sm text-[#546E7A] leading-relaxed">
-                    💡 Dica: se estiver muito “cheio”, mantenha a complexidade em <strong>Simple</strong>.
+                    💡 Dica: se estiver muito “cheio”, mantenha a complexidade em <strong>Simples</strong>.
                 </p>
             </div>
         </div>
     );
 
-    // Medium = tudo organizado
     const renderMediumMode = () => (
         <div data-testid="dashboard-medium" className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -250,11 +263,11 @@ export function DashboardPage() {
                     <p className="text-4xl font-bold text-[#2C3E50]">{loading ? "…" : taskStats.total}</p>
                 </div>
                 <div className="card">
-                    <p className="text-sm font-medium text-[#546E7A] mb-2">To Do</p>
+                    <p className="text-sm font-medium text-[#546E7A] mb-2">A fazer</p>
                     <p className="text-4xl font-bold text-[#005A9C]">{loading ? "…" : taskStats.todo}</p>
                 </div>
                 <div className="card">
-                    <p className="text-sm font-medium text-[#546E7A] mb-2">Em progresso</p>
+                    <p className="text-sm font-medium text-[#546E7A] mb-2">Em andamento</p>
                     <p className="text-4xl font-bold text-[#FFBF00]">{loading ? "…" : taskStats.doing}</p>
                 </div>
                 <div className="card">
@@ -268,7 +281,12 @@ export function DashboardPage() {
                     <h3 className="text-2xl font-bold text-[#2C3E50]">Ações rápidas</h3>
 
                     <div className="space-y-3">
-                        <button onClick={() => router.push("/tasks")} className="card-interactive w-full text-left" type="button" data-testid="dashboard-view-tasks-btn">
+                        <button
+                            onClick={() => router.push("/tasks")}
+                            className="card-interactive w-full text-left"
+                            type="button"
+                            data-testid="dashboard-view-tasks-btn"
+                        >
                             <span className="text-2xl mb-2 block" aria-hidden="true">
                                 📋
                             </span>
@@ -276,11 +294,16 @@ export function DashboardPage() {
                             <p className="text-sm text-[#546E7A]">Organize seu Kanban</p>
                         </button>
 
-                        <button onClick={() => router.push("/timer")} className="card-interactive w-full text-left" type="button" data-testid="dashboard-start-timer-btn">
+                        <button
+                            onClick={() => router.push("/timer")}
+                            className="card-interactive w-full text-left"
+                            type="button"
+                            data-testid="dashboard-start-timer-btn"
+                        >
                             <span className="text-2xl mb-2 block" aria-hidden="true">
                                 ⏱️
                             </span>
-                            <p className="font-bold text-[#2C3E50]">Focus Timer</p>
+                            <p className="font-bold text-[#2C3E50]">Timer de foco</p>
                             <p className="text-sm text-[#546E7A]">Inicie uma sessão gentil</p>
                         </button>
                     </div>
@@ -296,12 +319,17 @@ export function DashboardPage() {
                                 <span className="font-medium text-[#2C3E50]">{loading ? "…" : `${completionPct}%`}</span>
                             </div>
                             <div className="w-full bg-slate-200 rounded-full h-3">
-                                <div className="bg-[#2E7D32] h-3 rounded-full transition-all duration-500" style={{ width: `${clamp(completionPct, 0, 100)}%` }} />
+                                <div
+                                    className="bg-[#2E7D32] h-3 rounded-full transition-all duration-500"
+                                    style={{ width: `${clamp(completionPct, 0, 100)}%` }}
+                                />
                             </div>
                         </div>
 
                         <div className="bg-white/60 border border-slate-100 rounded-2xl p-4">
-                            <p className="text-sm text-[#546E7A] leading-relaxed">💡 Se você estiver pulando entre coisas, use o Timer para “uma coisa por vez”.</p>
+                            <p className="text-sm text-[#546E7A] leading-relaxed">
+                                💡 Se você estiver pulando entre coisas, use o Timer para “uma coisa por vez”.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -309,7 +337,6 @@ export function DashboardPage() {
         </div>
     );
 
-    // Detailed = Medium + densidade real baseada nas tarefas
     const renderDetailedMode = () => {
         const focusSuggestion = (byStatus.doing ?? [])[0] ?? (byStatus.todo ?? [])[0] ?? null;
 
@@ -318,7 +345,6 @@ export function DashboardPage() {
                 {renderMediumMode()}
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* 1) Tarefas recentes (reais) */}
                     <div className="card space-y-4">
                         <h3 className="text-xl font-bold text-[#2C3E50]">Tarefas recentes</h3>
 
@@ -361,7 +387,6 @@ export function DashboardPage() {
                         )}
                     </div>
 
-                    {/* 2) Conselhos baseados no Kanban (simples, sem tracking) */}
                     <div className="card space-y-4">
                         <h3 className="text-xl font-bold text-[#2C3E50]">Conselhos do momento</h3>
 
@@ -384,7 +409,6 @@ export function DashboardPage() {
                         </div>
                     </div>
 
-                    {/* 3) Mais dados (reais e “densos”) */}
                     <div className="card space-y-4">
                         <h3 className="text-xl font-bold text-[#2C3E50]">Mais dados</h3>
 
@@ -400,7 +424,7 @@ export function DashboardPage() {
                             </div>
 
                             <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
-                                <p className="text-xs text-[#546E7A]">Em progresso</p>
+                                <p className="text-xs text-[#546E7A]">Em andamento</p>
                                 <p className="text-2xl font-bold text-[#2C3E50]">{loading ? "…" : taskStats.doing}</p>
                             </div>
 
@@ -426,8 +450,8 @@ export function DashboardPage() {
 
                 <div className="bg-white/60 border border-slate-100 rounded-2xl p-4">
                     <p className="text-sm text-[#546E7A] leading-relaxed">
-                        💡 Este modo “Detailed” existe para demonstrar densidade de informação. Se ficar cansativo, volte para{" "}
-                        <strong>Medium</strong> ou <strong>Simple</strong>.
+                        💡 Este modo “Detalhado” existe para mostrar mais informação. Se ficar cansativo, volte para{" "}
+                        <strong>Médio</strong> ou <strong>Simples</strong>.
                     </p>
                 </div>
             </div>

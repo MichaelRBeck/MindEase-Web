@@ -2,6 +2,7 @@ import type { Task, TaskStatus } from "@/features/tasks/domain/task";
 import type { TasksRepository } from "@/features/tasks/domain/tasksRepository";
 import { demoTasks } from "@/features/tasks/data/demoData";
 
+// Gera um id simples pra usar no mock/in-memory
 function uid() {
     return Math.random().toString(16).slice(2) + Date.now().toString(16);
 }
@@ -10,11 +11,14 @@ function sortByUpdatedDesc(a: Task, b: Task) {
     return b.updatedAt - a.updatedAt;
 }
 
+// Repositório em memória (bom pra demo/teste sem Firebase)
 export class InMemoryTasksRepository implements TasksRepository {
     private tasks: Task[];
 
     constructor(seed?: Task[]) {
         const now = Date.now();
+
+        // Seed opcional, senão usa demoTasks como base
         this.tasks = (seed ?? (demoTasks as unknown as Task[])).map((t: any) => ({
             ...t,
             checklist: Array.isArray(t.checklist) ? t.checklist : [],
@@ -24,11 +28,13 @@ export class InMemoryTasksRepository implements TasksRepository {
     }
 
     async list(): Promise<Task[]> {
+        // Retorna cópia pra evitar alguém mutar a lista original
         return [...this.tasks].sort(sortByUpdatedDesc);
     }
 
     async create(input: Omit<Task, "id" | "createdAt" | "updatedAt">): Promise<Task> {
         const now = Date.now();
+
         const task: Task = {
             ...input,
             checklist: input.checklist ?? [],
@@ -36,6 +42,7 @@ export class InMemoryTasksRepository implements TasksRepository {
             createdAt: now,
             updatedAt: now,
         };
+
         this.tasks = [task, ...this.tasks];
         return task;
     }
@@ -63,8 +70,9 @@ export class InMemoryTasksRepository implements TasksRepository {
         const current = this.tasks.find((t) => t.id === id);
         if (!current) throw new Error("Task not found");
 
-        // Remove da lista
+        // Remove antes de inserir na coluna destino
         const remaining = this.tasks.filter((t) => t.id !== id);
+
         const moved: Task = {
             ...current,
             status: toStatus,
@@ -72,7 +80,7 @@ export class InMemoryTasksRepository implements TasksRepository {
             checklist: current.checklist ?? [],
         };
 
-        // Reconstroi mantendo a ordem por coluna
+        // Reconstrói colunas e aplica o splice na coluna alvo
         const columns: Record<TaskStatus, Task[]> = { todo: [], doing: [], done: [] };
         for (const t of remaining) columns[t.status].push({ ...t, checklist: t.checklist ?? [] });
 

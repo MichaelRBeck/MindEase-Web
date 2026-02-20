@@ -7,7 +7,7 @@ type TasksState = {
     items: Task[];
     loading: boolean;
     error: string | null;
-    hydrated: boolean;
+    hydrated: boolean; // marca quando já carregou pelo menos uma vez (SSR ou fetch)
 };
 
 const initialState: TasksState = {
@@ -18,14 +18,11 @@ const initialState: TasksState = {
     hydrated: false,
 };
 
-// Thunks recebem uid (porque auth está fora do redux por enquanto)
-export const fetchTasks = createAsyncThunk<Task[], { uid: string }>(
-    "tasks/fetch",
-    async ({ uid }) => {
-        const repo = new FirebaseTasksRepository(uid);
-        return await repo.list();
-    }
-);
+// Thunks: fazem CRUD no Firebase usando o uid como “chave” do usuário
+export const fetchTasks = createAsyncThunk<Task[], { uid: string }>("tasks/fetch", async ({ uid }) => {
+    const repo = new FirebaseTasksRepository(uid);
+    return await repo.list();
+});
 
 export const createTask = createAsyncThunk<Task, { uid: string; input: Omit<Task, "id" | "createdAt" | "updatedAt"> }>(
     "tasks/create",
@@ -43,14 +40,11 @@ export const updateTask = createAsyncThunk<Task, { uid: string; id: string; patc
     }
 );
 
-export const removeTask = createAsyncThunk<string, { uid: string; id: string }>(
-    "tasks/remove",
-    async ({ uid, id }) => {
-        const repo = new FirebaseTasksRepository(uid);
-        await repo.remove(id);
-        return id;
-    }
-);
+export const removeTask = createAsyncThunk<string, { uid: string; id: string }>("tasks/remove", async ({ uid, id }) => {
+    const repo = new FirebaseTasksRepository(uid);
+    await repo.remove(id);
+    return id;
+});
 
 export const moveTask = createAsyncThunk<Task[], { uid: string; id: string; toStatus: TaskStatus; toIndex: number }>(
     "tasks/move",
@@ -64,6 +58,7 @@ const tasksSlice = createSlice({
     name: "tasks",
     initialState,
     reducers: {
+        // Limpa tudo (usado no logout/troca de usuário)
         clearTasks(state) {
             state.uid = null;
             state.items = [];
@@ -72,6 +67,7 @@ const tasksSlice = createSlice({
             state.hydrated = false;
         },
 
+        // Hidratação vinda do SSR (preloadedState)
         hydrateFromServer(state, action: PayloadAction<{ uid: string; items: Task[] }>) {
             state.uid = action.payload.uid;
             state.items = action.payload.items;
@@ -82,10 +78,13 @@ const tasksSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
+            // fetch
             .addCase(fetchTasks.pending, (state, action) => {
                 state.loading = true;
                 state.error = null;
-                state.uid = action.meta.arg.uid; // ✅ trava no uid que está carregando
+
+                // Trava o uid do carregamento pra evitar misturar dados
+                state.uid = action.meta.arg.uid;
             })
             .addCase(fetchTasks.fulfilled, (state, action) => {
                 state.loading = false;
@@ -94,7 +93,7 @@ const tasksSlice = createSlice({
             })
             .addCase(fetchTasks.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.error.message ?? "Failed to load tasks";
+                state.error = action.error.message ?? "Falha ao carregar tarefas";
                 state.hydrated = true;
             })
 

@@ -2,32 +2,33 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { Sparkles, Settings, Clock3, Lightbulb } from "lucide-react";
 
 type OnboardingStep = {
     title: string;
     description: string;
-    image: string;
+    Icon: React.ComponentType<{ className?: string }>;
     tip: string;
 };
 
 const STEPS: readonly OnboardingStep[] = [
     {
-        title: "Welcome to MindEase",
-        description: "A supportive space designed specifically for neurodivergent minds.",
-        image: "🌸",
-        tip: "Take your time exploring. There's no rush.",
+        title: "Bem-vindo ao MindEase",
+        description: "Um espaço de apoio, pensado especialmente para mentes neurodivergentes.",
+        Icon: Sparkles,
+        tip: "Vá no seu ritmo. Não tem pressa.",
     },
     {
-        title: "Customize Your Experience",
-        description: "Adjust font size, spacing, and complexity levels to match your needs.",
-        image: "⚙️",
-        tip: "You can change these settings anytime in your profile.",
+        title: "Personalize sua experiência",
+        description: "Ajuste tamanho da fonte, espaçamento e níveis de complexidade do jeito que for melhor pra você.",
+        Icon: Settings,
+        tip: "Você pode mudar isso quando quiser nas configurações.",
     },
     {
-        title: "Focus Mode & Gentle Timers",
-        description: "Use focus mode to reduce distractions and gentle timers to pace yourself.",
-        image: "🕐",
-        tip: "All animations can be turned off for a calmer experience.",
+        title: "Modo foco e timers gentis",
+        description: "Use o modo foco para reduzir distrações e timers gentis para te ajudar a manter o ritmo.",
+        Icon: Clock3,
+        tip: "Se preferir, dá pra reduzir animações para ficar ainda mais calmo.",
     },
 ] as const;
 
@@ -54,6 +55,8 @@ export function OnboardingPage() {
         router.push("/auth");
     }
 
+    const StepIcon = currentStep.Icon;
+
     return (
         <main
             data-testid="onboarding-container"
@@ -64,8 +67,8 @@ export function OnboardingPage() {
             <div className="max-w-2xl w-full mx-auto">
                 <section className="card space-y-8">
                     <header className="text-center space-y-6">
-                        <div className="text-7xl" aria-hidden="true">
-                            {currentStep.image}
+                        <div className="flex justify-center">
+                            <StepIcon className="w-16 h-16 text-[#005A9C]" aria-hidden="true" />
                         </div>
 
                         <h1 id={titleId} className="text-3xl md:text-4xl font-bold text-[#2C3E50]">
@@ -81,15 +84,18 @@ export function OnboardingPage() {
                         </p>
 
                         <div className="bg-[#FFF8E1] border border-[#FFBF00]/30 rounded-2xl p-4">
-                            <p className="text-sm text-[#2C3E50] leading-relaxed">
-                                <span aria-hidden="true">💡 </span>
-                                {currentStep.tip}
+                            <p className="text-sm text-[#2C3E50] leading-relaxed flex items-start justify-center gap-2">
+                                <Lightbulb className="w-4 h-4 mt-0.5" aria-hidden="true" />
+                                <span>{currentStep.tip}</span>
                             </p>
                         </div>
                     </header>
 
-                    {/* Progress */}
-                    <div className="flex items-center justify-center gap-2" aria-label={`Step ${clampedStep} of ${totalSteps}`}>
+                    {/* Progresso do onboarding */}
+                    <div
+                        className="flex items-center justify-center gap-2"
+                        aria-label={`Etapa ${clampedStep} de ${totalSteps}`}
+                    >
                         {Array.from({ length: totalSteps }, (_, i) => i + 1).map((num) => (
                             <div
                                 key={num}
@@ -100,8 +106,12 @@ export function OnboardingPage() {
                         ))}
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex flex-col sm:flex-row gap-4 justify-between" role="group" aria-label="Onboarding navigation">
+                    {/* Navegação do onboarding */}
+                    <div
+                        className="flex flex-col sm:flex-row gap-4 justify-between"
+                        role="group"
+                        aria-label="Navegação do onboarding"
+                    >
                         {clampedStep > 1 ? (
                             <button
                                 data-testid="onboarding-back-btn"
@@ -109,7 +119,7 @@ export function OnboardingPage() {
                                 onClick={goBack}
                                 className="btn-ghost"
                             >
-                                Back
+                                Voltar
                             </button>
                         ) : (
                             <span aria-hidden="true" />
@@ -122,7 +132,7 @@ export function OnboardingPage() {
                                 onClick={goNext}
                                 className="btn-primary ml-auto"
                             >
-                                Next
+                                Próximo
                             </button>
                         ) : (
                             <button
@@ -131,7 +141,7 @@ export function OnboardingPage() {
                                 onClick={finish}
                                 className="btn-primary ml-auto"
                             >
-                                Get Started
+                                Começar
                             </button>
                         )}
                     </div>

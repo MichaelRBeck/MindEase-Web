@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 
 import { FocusDock } from "@/features/navigation/presentation/components/FocusDock";
 
-// ---- mocks ----
+// Mock do applyPatch pra simular sair do modo foco
 const applyPatchMock = jest.fn();
 
 let focusModeValue = true;
@@ -37,7 +37,6 @@ jest.mock("next/navigation", () => ({
     usePathname: () => "/tasks",
 }));
 
-
 jest.mock("next/link", () => {
     return function Link({ href, children, ...props }: any) {
         return (
@@ -61,7 +60,7 @@ describe("<FocusDock />", () => {
         expect(screen.queryByTestId("focus-menu-btn")).not.toBeInTheDocument();
     });
 
-    it("deve abrir e fechar o menu ao clicar no botão Menu/Close", async () => {
+    it("deve abrir e fechar o menu ao clicar no botão Menu/Fechar", async () => {
         const user = userEvent.setup();
         render(<FocusDock />);
 
@@ -70,13 +69,13 @@ describe("<FocusDock />", () => {
 
         await user.click(btn);
 
-        // menu aberto
-        expect(screen.getByRole("navigation", { name: /focus navigation/i })).toBeInTheDocument();
-        expect(btn).toHaveTextContent(/close/i);
+        // Menu aberto
+        expect(screen.getByRole("navigation", { name: /navega(c|ç)ão.*foco/i })).toBeInTheDocument();
+        expect(btn).toHaveTextContent(/fechar/i);
 
-        // fecha clicando no botão novamente
+        // Fecha clicando no botão novamente
         await user.click(btn);
-        expect(screen.queryByRole("navigation", { name: /focus navigation/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole("navigation", { name: /navega(c|ç)ão.*foco/i })).not.toBeInTheDocument();
     });
 
     it("deve fechar o menu ao pressionar Escape", async () => {
@@ -84,29 +83,29 @@ describe("<FocusDock />", () => {
         render(<FocusDock />);
 
         await user.click(screen.getByTestId("focus-menu-btn"));
-        expect(screen.getByRole("navigation", { name: /focus navigation/i })).toBeInTheDocument();
+        expect(screen.getByRole("navigation", { name: /navega(c|ç)ão.*foco/i })).toBeInTheDocument();
 
         fireEvent.keyDown(window, { key: "Escape" });
-        expect(screen.queryByRole("navigation", { name: /focus navigation/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole("navigation", { name: /navega(c|ç)ão.*foco/i })).not.toBeInTheDocument();
     });
 
-    it("Exit Focus Mode: deve chamar applyPatch e fechar o menu", async () => {
+    it("Sair do modo foco: deve chamar applyPatch e fechar o menu", async () => {
         const user = userEvent.setup();
         applyPatchMock.mockResolvedValueOnce(undefined);
 
         render(<FocusDock />);
 
-        // abre o menu
+        // Abre o menu
         await user.click(screen.getByTestId("focus-menu-btn"));
-        expect(screen.getByRole("navigation", { name: /focus navigation/i })).toBeInTheDocument();
+        expect(screen.getByRole("navigation", { name: /navega(c|ç)ão.*foco/i })).toBeInTheDocument();
 
-        // sai do foco
-        await user.click(screen.getByRole("button", { name: /exit focus mode/i }));
+        // Sai do foco
+        await user.click(screen.getByRole("button", { name: /sair.*modo.*foco/i }));
 
         expect(applyPatchMock).toHaveBeenCalledTimes(1);
         expect(applyPatchMock).toHaveBeenCalledWith({ focusMode: false });
 
-        // depois do await, ele fecha
-        expect(screen.queryByRole("navigation", { name: /focus navigation/i })).not.toBeInTheDocument();
+        // Depois do await, ele fecha
+        expect(screen.queryByRole("navigation", { name: /navega(c|ç)ão.*foco/i })).not.toBeInTheDocument();
     });
 });

@@ -11,20 +11,28 @@ export type PomodoroState = {
     phase: PomodoroPhase;
     secondsLeft: number;
     isRunning: boolean;
-    focusCyclesCompleted: number; // conta quantos focos completos já fez no “bloco”
+    focusCyclesCompleted: number; // controla quando deve entrar em pausa longa
 };
 
-export function getPhaseSeconds(config: PomodoroConfig, phase: PomodoroPhase): number {
+// Converte minutos da fase atual para segundos
+export function getPhaseSeconds(
+    config: PomodoroConfig,
+    phase: PomodoroPhase
+): number {
     const minutes =
         phase === "focus"
             ? config.focusMinutes
             : phase === "shortBreak"
                 ? config.shortBreakMinutes
                 : config.longBreakMinutes;
+
     return Math.max(1, Math.round(minutes * 60));
 }
 
-export function createInitialPomodoro(config: PomodoroConfig): PomodoroState {
+// Estado inicial sempre começa em foco, parado
+export function createInitialPomodoro(
+    config: PomodoroConfig
+): PomodoroState {
     return {
         phase: "focus",
         secondsLeft: getPhaseSeconds(config, "focus"),
@@ -33,11 +41,19 @@ export function createInitialPomodoro(config: PomodoroConfig): PomodoroState {
     };
 }
 
-export function toggleRun(state: PomodoroState, running: boolean): PomodoroState {
+// Liga ou pausa o timer
+export function toggleRun(
+    state: PomodoroState,
+    running: boolean
+): PomodoroState {
     return { ...state, isRunning: running };
 }
 
-export function resetPomodoro(state: PomodoroState, config: PomodoroConfig): PomodoroState {
+// Reseta completamente para o início
+export function resetPomodoro(
+    state: PomodoroState,
+    config: PomodoroConfig
+): PomodoroState {
     return {
         phase: "focus",
         secondsLeft: getPhaseSeconds(config, "focus"),
@@ -46,26 +62,32 @@ export function resetPomodoro(state: PomodoroState, config: PomodoroConfig): Pom
     };
 }
 
+// Diminui 1 segundo se estiver rodando
 export function tick(state: PomodoroState): PomodoroState {
     if (!state.isRunning) return state;
     return { ...state, secondsLeft: Math.max(0, state.secondsLeft - 1) };
 }
 
-export function nextPhase(state: PomodoroState, config: PomodoroConfig): PomodoroState {
-    // chama quando secondsLeft chega em 0, ou quando usuário “skip”
+// Controla a transição entre foco e pausas
+export function nextPhase(
+    state: PomodoroState,
+    config: PomodoroConfig
+): PomodoroState {
+    // Se estava em foco, vai para pausa (curta ou longa)
     if (state.phase === "focus") {
         const nextCycles = state.focusCyclesCompleted + 1;
         const isLong = nextCycles % config.cyclesUntilLongBreak === 0;
         const next: PomodoroPhase = isLong ? "longBreak" : "shortBreak";
+
         return {
             phase: next,
             secondsLeft: getPhaseSeconds(config, next),
-            isRunning: false, // transição gentil: não auto-inicia
+            isRunning: false, // não inicia automaticamente (transição mais gentil)
             focusCyclesCompleted: nextCycles,
         };
     }
 
-    // break -> focus
+    // Se estava em pausa, volta para foco
     return {
         phase: "focus",
         secondsLeft: getPhaseSeconds(config, "focus"),

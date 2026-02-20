@@ -28,6 +28,7 @@ type AuthContextValue = {
 
 const AuthContext = React.createContext<AuthContextValue | null>(null);
 
+// Envia o idToken pro server e vira cookie httpOnly (SSR consegue ler)
 async function createSessionCookie(idToken: string) {
     await fetch("/api/session", {
         method: "POST",
@@ -37,6 +38,7 @@ async function createSessionCookie(idToken: string) {
     });
 }
 
+// Apaga o cookie de sessão no server (logout)
 async function clearSessionCookie() {
     await fetch("/api/session", { method: "DELETE", credentials: "include" });
 }
@@ -50,11 +52,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         let alive = true;
 
         (async () => {
+            // Mantém a sessão só durante a aba/janela (mais “leve” pro hackathon)
             await setPersistence(firebaseAuth, browserSessionPersistence).catch(() => { });
             if (!alive) return;
 
+            // Redux começa em loading até o Firebase responder
             dispatch(setAuthState({ uid: null, status: "loading" }));
 
+            // Listener principal de login/logout do Firebase
             const unsub = onAuthStateChanged(firebaseAuth, async (u) => {
                 setUser(u);
 
@@ -68,6 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 setStatus("authenticated");
                 dispatch(setAuthState({ uid: u.uid, status: "authenticated" }));
 
+                // Gera cookie de sessão pro SSR identificar o usuário
                 const idToken = await u.getIdToken();
                 await createSessionCookie(idToken).catch(() => { });
             });
@@ -84,16 +90,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         () => ({
             user,
             status,
+
+            // Login + cria/atualiza cookie de sessão
             signIn: async (email, password) => {
                 const cred = await signInWithEmailAndPassword(firebaseAuth, email, password);
                 const idToken = await cred.user.getIdToken();
                 await createSessionCookie(idToken);
             },
+
+            // Cadastro + cria/atualiza cookie de sessão
             signUp: async (email, password) => {
                 const cred = await createUserWithEmailAndPassword(firebaseAuth, email, password);
                 const idToken = await cred.user.getIdToken();
                 await createSessionCookie(idToken);
             },
+
+            // Logout: limpa Firebase, cookie e estado local
             signOut: async () => {
                 await fbSignOut(firebaseAuth);
                 await clearSessionCookie();
@@ -101,7 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 dispatch(setAuthState({ uid: null, status: "anonymous" }));
             },
         }),
-        [user, status]
+        [user, status, dispatch]
     );
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

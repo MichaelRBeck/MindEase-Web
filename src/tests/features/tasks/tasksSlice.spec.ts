@@ -9,7 +9,7 @@ import tasksReducer, {
 
 import type { Task } from "@/features/tasks/domain/task";
 
-// ✅ Mock do repositório (classe instanciada com `new`)
+// Mock do repo do Firebase (classe instanciada com new)
 const listMock = jest.fn();
 const removeMock = jest.fn();
 
@@ -18,7 +18,6 @@ jest.mock("@/features/tasks/data/firebaseTasksRepository", () => {
         FirebaseTasksRepository: jest.fn().mockImplementation((_uid: string) => ({
             list: listMock,
             remove: removeMock,
-            // se precisar depois:
             create: jest.fn(),
             update: jest.fn(),
             move: jest.fn(),
@@ -49,7 +48,7 @@ describe("tasksSlice", () => {
                 createdAt: Date.now() as any,
                 updatedAt: Date.now() as any,
                 description: "",
-                priority: "low"
+                priority: "low",
             },
         ];
 
@@ -96,7 +95,6 @@ describe("tasksSlice", () => {
         await promise;
     });
 
-
     it("thunk: fetchTasks.fulfilled deve colocar items e hydrated=true", async () => {
         const store = makeStore();
 
@@ -123,7 +121,6 @@ describe("tasksSlice", () => {
         expect(state.hydrated).toBe(true);
     });
 
-
     it("thunk: fetchTasks.rejected deve setar error e hydrated=true", async () => {
         const store = makeStore();
 
@@ -135,11 +132,9 @@ describe("tasksSlice", () => {
 
         expect(state.loading).toBe(false);
         expect(state.hydrated).toBe(true);
-
         expect(typeof state.error).toBe("string");
         expect(state.error!).toMatch(/boom|Failed to load tasks/i);
     });
-
 
     it("thunk: removeTask deve chamar repo.remove e remover item do state", async () => {
         const store = makeStore({

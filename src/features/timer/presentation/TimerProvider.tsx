@@ -18,6 +18,7 @@ type TimerContextValue = {
     actions: ReturnType<typeof usePomodoroTimer>["actions"];
 };
 
+// Context do timer (pra evitar prop drilling nas páginas)
 const TimerContext = createContext<TimerContextValue | null>(null);
 
 const DEFAULT_SHORT_BREAK_MINUTES = 5;
@@ -28,19 +29,21 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     const { user, status } = useAuth();
     const uid = user?.uid;
 
-    // Como o app inteiro é protegido, isso não deve acontecer;
-    // mas evita crash durante o "loading" inicial.
+    // Evita sync enquanto auth ainda está resolvendo
     const allowSync = status === "authenticated" && !!uid;
 
+    // Repo do profile (pra puxar preferredFocusMinutes)
     const profileRepo = useMemo(() => {
         if (!uid) return null;
         return makeUserProfileRepository(uid);
     }, [uid]);
 
+    // Minutos de foco que alimentam o config do Pomodoro
     const [focusMinutes, setFocusMinutes] = useState<number>(
         DEFAULT_USER_PROFILE.routine.preferredFocusMinutes
     );
 
+    // Config usado pelo hook do Pomodoro (recalcula quando muda focusMinutes)
     const config = useMemo<PomodoroConfig>(
         () => ({
             focusMinutes,
@@ -53,7 +56,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
 
     const { state, actions } = usePomodoroTimer(config);
 
-    // ✅ aplica preferência do profile sem quebrar sessão em andamento
+    // Aplica a preferência do profile, mas sem mexer no meio de uma sessão
     async function syncFromProfile() {
         if (!allowSync || !profileRepo) return;
 
@@ -70,20 +73,19 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
         const hasSession = state.secondsLeft !== totalSecondsByPhase;
         const busy = state.isRunning || hasSession;
 
-        // se está em uma sessão (rodando ou já iniciou), não altera no meio
         if (busy) return;
 
         setFocusMinutes(preferred);
     }
 
-    // Load inicial (quando autenticar)
+    // Sync inicial depois que autentica
     useEffect(() => {
         if (!allowSync) return;
         void syncFromProfile();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [allowSync, profileRepo]);
 
-    // ✅ escuta “profileUpdated” (agora não usamos mais storage)
+    // Reage quando o usuário salva o profile (eventinho local)
     useEffect(() => {
         if (!allowSync) return;
 

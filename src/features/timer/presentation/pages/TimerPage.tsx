@@ -6,9 +6,11 @@ import { CognitiveAlertBanner } from "@/features/cognitive/presentation/componen
 import { useTimer } from "@/features/timer/presentation/TimerProvider";
 import type { PomodoroPhase } from "@/features/timer/domain/pomodoro";
 import { useCognitive } from "@/features/cognitive/presentation/CognitiveProvider";
+import { Play, Pause, RotateCcw, SkipForward, Lightbulb } from "lucide-react";
 
 const DURATIONS: readonly number[] = [2, 10, 15, 25, 30, 45] as const;
 
+// Formata segundos em mm:ss
 function formatTime(totalSeconds: number): string {
     const clamped = Math.max(0, Math.floor(totalSeconds));
     const mins = Math.floor(clamped / 60);
@@ -32,14 +34,16 @@ export function TimerPage() {
     const { applied } = useCognitive();
     const animationsOn = applied.animationsEnabled;
 
-    // ✅ estado global (persistente) vindo do Provider
+    // Estado + ações do Pomodoro vindo do Provider (persistente no app)
     const { state, actions, config, setFocusMinutes } = useTimer();
 
+    // Alerta cognitivo (aparece depois de um tempo, com snooze)
     const alert = useCognitiveAlert({
         key: "timer",
         message: "Você está focando há um tempo. Quer fazer uma pausa curta ou ajustar a duração?",
     });
 
+    // Total em segundos da fase atual (foco / pausa curta / pausa longa)
     const totalSecondsByPhase = React.useMemo(() => {
         const minutes =
             state.phase === "focus"
@@ -51,9 +55,13 @@ export function TimerPage() {
         return Math.max(1, Math.round(minutes * 60));
     }, [state.phase, config]);
 
+    // Progresso do círculo (0 a 100)
     const progress =
-        totalSecondsByPhase > 0 ? ((totalSecondsByPhase - state.secondsLeft) / totalSecondsByPhase) * 100 : 0;
+        totalSecondsByPhase > 0
+            ? ((totalSecondsByPhase - state.secondsLeft) / totalSecondsByPhase) * 100
+            : 0;
 
+    // Cálculo do “strokeDashoffset” pra desenhar o progresso no SVG
     const radius = 120;
     const circumference = 2 * Math.PI * radius;
     const dashOffset = circumference * (1 - progress / 100);
@@ -65,10 +73,15 @@ export function TimerPage() {
     const isBreak = state.phase !== "focus";
 
     return (
-        <main data-testid="timer-container" className="min-h-screen bg-[#F4F4F9] flex flex-col items-center justify-center px-6 py-12">
+        <main
+            data-testid="timer-container"
+            className="min-h-screen bg-[#F4F4F9] flex flex-col items-center justify-center px-6 py-12"
+        >
             <div className="max-w-2xl w-full mx-auto space-y-8">
                 <header className="text-center space-y-2">
-                    <h1 className="text-4xl md:text-5xl font-bold text-[#2C3E50]">Focus Timer</h1>
+                    <h1 className="text-4xl md:text-5xl font-bold text-[#2C3E50]">
+                        Timer de foco
+                    </h1>
                     <p className="text-lg text-[#546E7A]">
                         {phaseHint(state.phase)} • {phaseLabel(state.phase)}
                     </p>
@@ -90,37 +103,62 @@ export function TimerPage() {
                                     fill="none"
                                     strokeDasharray={circumference}
                                     strokeDashoffset={dashOffset}
-                                    className={
-                                        animationsOn
-                                            ? "transition-all duration-1000 ease-linear"
-                                            : "transition-none"
-                                    }
+                                    className={animationsOn ? "transition-all duration-1000 ease-linear" : "transition-none"}
                                 />
                             </svg>
 
                             <div className="absolute inset-0 flex items-center justify-center">
-                                <span data-testid="timer-display" className="text-5xl font-bold text-[#2C3E50]" aria-live="polite">
+                                <span
+                                    data-testid="timer-display"
+                                    className="text-5xl font-bold text-[#2C3E50]"
+                                    aria-live="polite"
+                                >
                                     {formatTime(state.secondsLeft)}
                                 </span>
                             </div>
                         </div>
 
+                        {/* Botões principais do timer */}
                         <div className="flex gap-4 flex-wrap justify-center">
                             {!state.isRunning ? (
-                                <button data-testid="timer-start-btn" onClick={actions.start} className="btn-primary" type="button">
-                                    Start
+                                <button
+                                    data-testid="timer-start-btn"
+                                    onClick={actions.start}
+                                    className="btn-primary flex items-center gap-2"
+                                    type="button"
+                                >
+                                    <Play className="w-4 h-4" aria-hidden="true" />
+                                    Iniciar
                                 </button>
                             ) : (
-                                <button data-testid="timer-pause-btn" onClick={actions.pause} className="btn-secondary" type="button">
-                                    Pause
+                                <button
+                                    data-testid="timer-pause-btn"
+                                    onClick={actions.pause}
+                                    className="btn-secondary flex items-center gap-2"
+                                    type="button"
+                                >
+                                    <Pause className="w-4 h-4" aria-hidden="true" />
+                                    Pausar
                                 </button>
                             )}
 
-                            <button data-testid="timer-reset-btn" onClick={actions.reset} className="btn-ghost" type="button">
-                                Reset
+                            <button
+                                data-testid="timer-reset-btn"
+                                onClick={actions.reset}
+                                className="btn-ghost flex items-center gap-2"
+                                type="button"
+                            >
+                                <RotateCcw className="w-4 h-4" aria-hidden="true" />
+                                Reiniciar
                             </button>
 
-                            <button data-testid="timer-skip-btn" onClick={actions.skip} className="btn-ghost" type="button">
+                            <button
+                                data-testid="timer-skip-btn"
+                                onClick={actions.skip}
+                                className="btn-ghost flex items-center gap-2"
+                                type="button"
+                            >
+                                <SkipForward className="w-4 h-4" aria-hidden="true" />
                                 Pular etapa
                             </button>
                         </div>
@@ -129,6 +167,7 @@ export function TimerPage() {
                     <div className="space-y-4">
                         <p className="text-sm font-medium text-[#2C3E50]">Duração do foco (minutos)</p>
 
+                        {/* Presets rápidos pra trocar a duração do foco */}
                         <div className="flex gap-2 flex-wrap">
                             {DURATIONS.map((min) => (
                                 <button
@@ -154,14 +193,21 @@ export function TimerPage() {
                     </div>
 
                     <div className="bg-[#FFF8E1] border border-[#FFBF00]/30 rounded-2xl p-4">
-                        <p className="text-sm text-[#2C3E50] leading-relaxed">
-                            💡 Este Pomodoro é gentil: ao terminar uma etapa, ele sugere a próxima, mas não inicia sozinho.
+                        <p className="text-sm text-[#2C3E50] leading-relaxed inline-flex items-start gap-2">
+                            <Lightbulb className="w-4 h-4 mt-0.5" aria-hidden="true" />
+                            <span>Este Pomodoro é gentil: ao terminar uma etapa, ele sugere a próxima, mas não inicia sozinho.</span>
                         </p>
                     </div>
                 </section>
             </div>
 
-            <CognitiveAlertBanner visible={alert.visible} message={alert.message} onDismiss={alert.dismiss} onSnooze={alert.snooze} />
+            {/* Banner de alerta cognitivo (com snooze e dismiss) */}
+            <CognitiveAlertBanner
+                visible={alert.visible}
+                message={alert.message}
+                onDismiss={alert.dismiss}
+                onSnooze={alert.snooze}
+            />
         </main>
     );
 }

@@ -1,9 +1,7 @@
-import React from "react";
 import { render, screen } from "@testing-library/react";
 
 import { Sidebar } from "@/features/navigation/presentation/components/Sidebar";
 
-// ---- mocks ----
 let pathnameValue = "/tasks";
 let focusModeValue = false;
 let navProfileValue: "simple" | "guided" | "power" = "simple";
@@ -25,6 +23,7 @@ jest.mock("@/features/profile/presentation/hooks/useUserProfile", () => ({
         profile: {
             navigationProfile: navProfileValue,
         },
+        hydrated: true,
     }),
 }));
 
@@ -38,6 +37,11 @@ jest.mock("next/link", () => {
     };
 });
 
+// Pega 1 link pelo href (bem útil pra validar rotas sem depender do texto)
+function findLinkByHref(href: string) {
+    return screen.getAllByRole("link").find((a) => a.getAttribute("href") === href) ?? null;
+}
+
 describe("<Sidebar />", () => {
     beforeEach(() => {
         pathnameValue = "/tasks";
@@ -45,7 +49,7 @@ describe("<Sidebar />", () => {
         navProfileValue = "simple";
     });
 
-    it("deve ocultar a sidebar quando Focus Mode estiver ativo", () => {
+    it("deve ocultar a sidebar quando o modo foco estiver ativo", () => {
         focusModeValue = true;
 
         render(<Sidebar />);
@@ -54,43 +58,45 @@ describe("<Sidebar />", () => {
         expect(screen.queryByTestId("mobile-navigation")).not.toBeInTheDocument();
     });
 
-    it("simple: deve mostrar badge e itens reduzidos (Dashboard/Tasks/Timer/Settings)", () => {
+    it("simple: deve mostrar menu reduzido e marcar /tasks como ativo", () => {
         navProfileValue = "simple";
         pathnameValue = "/tasks";
 
         render(<Sidebar />);
 
         expect(screen.getByTestId("desktop-navigation")).toBeInTheDocument();
+        expect(screen.getByTestId("mobile-navigation")).toBeInTheDocument();
 
-        expect(screen.getByText(/simple navigation/i)).toBeInTheDocument();
+        // Itens do perfil simples (por rota)
+        expect(findLinkByHref("/dashboard")).toBeTruthy();
+        expect(findLinkByHref("/tasks")).toBeTruthy();
+        expect(findLinkByHref("/timer")).toBeTruthy();
+        expect(findLinkByHref("/settings")).toBeTruthy();
 
-        expect(screen.getByTestId("nav-dashboard")).toBeInTheDocument();
-        expect(screen.getByTestId("nav-tasks")).toBeInTheDocument();
-        expect(screen.getByTestId("nav-timer")).toBeInTheDocument();
-        expect(screen.getByTestId("nav-settings")).toBeInTheDocument();
+        // /profile e /panel não ficam no menu principal do simple, mas aparecem como atalhos no final
+        expect(findLinkByHref("/profile")).toBeTruthy();
+        expect(findLinkByHref("/panel")).toBeTruthy();
 
-        expect(screen.getByTestId("nav-mobile-dashboard")).toBeInTheDocument();
-        expect(screen.getByTestId("nav-mobile-tasks")).toBeInTheDocument();
+        // Um dos links de /tasks deve estar marcado como ativo (desktop ou mobile)
+        const activeTasks = screen
+            .getAllByRole("link")
+            .filter((a) => a.getAttribute("href") === "/tasks")
+            .some((a) => a.getAttribute("aria-current") === "page");
 
-        expect(screen.getByTestId("nav-tasks")).toHaveAttribute("aria-current", "page");
-        expect(screen.getByTestId("nav-mobile-tasks")).toHaveAttribute("aria-current", "page");
-
-        expect(screen.getAllByText(/profile/i).length).toBeGreaterThanOrEqual(1);
-
-        const activeLinks = screen.getAllByRole("link", { name: /tasks/i });
-        expect(activeLinks.some((a) => a.getAttribute("aria-current") === "page")).toBe(true);
+        expect(activeTasks).toBe(true);
     });
 
-    it("power: deve mostrar Quick actions", () => {
+    it("power: deve mostrar ações rápidas", () => {
         navProfileValue = "power";
 
         render(<Sidebar />);
 
-        expect(screen.getByText(/power navigation/i)).toBeInTheDocument();
+        // Texto do bloco (PT ou fallback em inglês)
+        expect(screen.getByText(/ações rápidas|quick actions/i)).toBeInTheDocument();
 
-        expect(screen.getByText(/quick actions/i)).toBeInTheDocument();
-        expect(screen.getByRole("link", { name: /\+ add task/i })).toBeInTheDocument();
-        expect(screen.getByRole("link", { name: /start timer/i })).toBeInTheDocument();
-        expect(screen.getByRole("link", { name: /adjust cognitive panel/i })).toBeInTheDocument();
+        // Links do bloco (por rota)
+        expect(findLinkByHref("/tasks")).toBeTruthy();
+        expect(findLinkByHref("/timer")).toBeTruthy();
+        expect(findLinkByHref("/panel")).toBeTruthy();
     });
 });

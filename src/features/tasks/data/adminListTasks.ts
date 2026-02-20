@@ -2,11 +2,13 @@ import "server-only";
 import type { Task, TaskStatus } from "@/features/tasks/domain/task";
 import { adminDb } from "@/app/lib/firebase/admin";
 
+// Garante que o status vindo do banco sempre seja válido
 function normalizeStatus(s: unknown): TaskStatus {
     return s === "doing" || s === "done" ? s : "todo";
 }
 
 export async function adminListTasks(uid: string): Promise<Task[]> {
+    // Busca tarefas do usuário já ordenadas por atualização (mais recentes primeiro)
     const snap = await adminDb
         .collection("users")
         .doc(uid)
@@ -14,6 +16,7 @@ export async function adminListTasks(uid: string): Promise<Task[]> {
         .orderBy("updatedAt", "desc")
         .get();
 
+    // Normaliza os dados para garantir tipagem consistente no domínio
     return snap.docs.map((d) => {
         const data = d.data() as Partial<Task> & Record<string, unknown>;
 
@@ -26,7 +29,11 @@ export async function adminListTasks(uid: string): Promise<Task[]> {
             checklist: Array.isArray(data.checklist) ? (data.checklist as Task["checklist"]) : [],
             createdAt: typeof data.createdAt === "number" ? data.createdAt : Date.now(),
             updatedAt: typeof data.updatedAt === "number" ? data.updatedAt : Date.now(),
-            ...(typeof (data as any).order === "number" ? { order: (data as any).order } : {}),
+
+            // Campo opcional usado para ordenação manual no Kanban
+            ...(typeof (data as any).order === "number"
+                ? { order: (data as any).order }
+                : {}),
         } as Task;
     });
 }

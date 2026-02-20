@@ -1,8 +1,16 @@
+// Níveis de complexidade visual da interface
 export type ComplexityLevel = "simple" | "medium" | "detailed";
+
+// Contraste de cores aplicado na UI
 export type ContrastLevel = "normal" | "high";
+
+// Modo de exibição de conteúdo (resumido ou completo)
 export type DetailMode = "summary" | "detailed";
+
+// Estilo principal de navegação
 export type NavigationStyle = "sidebar" | "bottom";
 
+// Preferências cognitivas persistidas por usuário
 export type CognitivePreferences = {
     complexityLevel: ComplexityLevel;
     focusMode: boolean;
@@ -18,9 +26,10 @@ export type CognitivePreferences = {
     navigationStyle: NavigationStyle;
 
     cognitiveAlertsEnabled: boolean;
-    alertThresholdMinutes: number; // ex: 3,5,10
+    alertThresholdMinutes: number; // ex: 3, 5, 10
 };
 
+// Valores padrão aplicados quando não há preferências salvas
 export const DEFAULT_COGNITIVE_PREFS: CognitivePreferences = {
     complexityLevel: "medium",
     focusMode: false,

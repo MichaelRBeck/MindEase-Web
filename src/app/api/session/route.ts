@@ -5,16 +5,23 @@ import { adminAuth } from "@/app/lib/firebase/admin";
 
 const COOKIE_NAME = "__session";
 
+// Cria cookie de sessão a partir do idToken do Firebase
 export async function POST(req: Request) {
     const { idToken } = (await req.json()) as { idToken?: string };
-    if (!idToken) return NextResponse.json({ error: "Missing idToken" }, { status: 400 });
 
-    // 1 dia
+    if (!idToken) {
+        return NextResponse.json({ error: "Missing idToken" }, { status: 400 });
+    }
+
+    // Duração da sessão: 1 dia
     const expiresIn = 1 * 24 * 60 * 60 * 1000;
 
+    // Gera session cookie seguro no servidor
     const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
 
     const cookieStore = await cookies();
+
+    // Define cookie httpOnly
     cookieStore.set(COOKIE_NAME, sessionCookie, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -26,8 +33,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
 }
 
+// Remove a sessão (logout)
 export async function DELETE() {
     const cookieStore = await cookies();
+
+    // Zera o cookie para invalidar a sessão
     cookieStore.set(COOKIE_NAME, "", {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",

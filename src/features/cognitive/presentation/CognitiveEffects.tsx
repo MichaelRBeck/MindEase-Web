@@ -9,15 +9,17 @@ export function CognitiveEffects() {
     React.useEffect(() => {
         const root = document.documentElement;
 
+        // Normaliza valores pra não quebrar CSS se vier algo estranho
         const fontScale = Number.isFinite(applied.fontSizeMultiplier) ? applied.fontSizeMultiplier : 1;
         const line = Number.isFinite(applied.lineSpacing) ? applied.lineSpacing : 1.5;
         const space = Number.isFinite(applied.spacingMultiplier) ? applied.spacingMultiplier : 1;
 
+        // Variáveis CSS usadas pelos componentes (fonte, espaçamento e tokens)
         root.style.setProperty("--me-font-scale", String(fontScale));
         root.style.setProperty("--me-line-height", String(line));
         root.style.setProperty("--me-space", String(space));
 
-        // spacing tokens “prontos”
+        // Tokens derivados do espaçamento (pra manter tudo proporcional)
         root.style.setProperty("--me-card-padding", `${1.5 * space}rem`);
         root.style.setProperty("--me-card-padding-md", `${2.0 * space}rem`);
         root.style.setProperty("--me-interactive-padding", `${1.5 * space}rem`);
@@ -28,6 +30,7 @@ export function CognitiveEffects() {
         root.style.setProperty("--me-btn-px-secondary", `${2.0 * space}rem`);
         root.style.setProperty("--me-btn-px-ghost", `${1.5 * space}rem`);
 
+        // Flags pra UI reagir via CSS (contraste, animações, foco, etc.)
         root.dataset.contrast = applied.contrastLevel ?? "normal";
         root.dataset.animations = applied.animationsEnabled ? "on" : "off";
         root.dataset.focus = applied.focusMode ? "on" : "off";

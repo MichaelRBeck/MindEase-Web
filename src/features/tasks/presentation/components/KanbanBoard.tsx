@@ -26,12 +26,14 @@ import {
     type ChecklistItem,
 } from "@/features/tasks/domain/checklist";
 
+import { Pencil, Trash2, GripVertical, Lightbulb } from "lucide-react";
+
 type Column = { id: TaskStatus; title: string; bg: string };
 
 const COLUMNS: readonly Column[] = [
-    { id: "todo", title: "To Do", bg: "bg-[#E1F5FE]" },
-    { id: "doing", title: "Doing", bg: "bg-[#FFF8E1]" },
-    { id: "done", title: "Done", bg: "bg-[#E8F5E9]" },
+    { id: "todo", title: "A fazer", bg: "bg-[#E1F5FE]" },
+    { id: "doing", title: "Em andamento", bg: "bg-[#FFF8E1]" },
+    { id: "done", title: "Concluídas", bg: "bg-[#E8F5E9]" },
 ] as const;
 
 type TaskModalState =
@@ -60,7 +62,7 @@ export function KanbanBoard() {
 
     const [modal, setModal] = React.useState<TaskModalState>({ open: false });
 
-    // ✅ um pouco mais fácil de iniciar drag: distância menor + tolerante
+    // Sensor do drag com distância menor pra ficar mais fácil de pegar
     const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
     const handleCreate = async (input: CreateTaskInput) => {
@@ -102,7 +104,7 @@ export function KanbanBoard() {
         const target = parseOver(overId, byStatus);
         if (!target) return;
 
-        // cross-column
+        // Move entre colunas
         if (target.status !== activeTask.status) {
             const from = COLUMNS.find((c) => c.id === activeTask.status)?.title ?? activeTask.status;
             const to = COLUMNS.find((c) => c.id === target.status)?.title ?? target.status;
@@ -123,7 +125,7 @@ export function KanbanBoard() {
             return;
         }
 
-        // reorder mesma coluna
+        // Reordena dentro da mesma coluna
         const col = byStatus[activeTask.status];
         const oldIndex = col.findIndex((t) => t.id === activeTask.id);
         if (oldIndex < 0) return;
@@ -142,7 +144,6 @@ export function KanbanBoard() {
     return (
         <div className="space-y-6">
             <DndContext sensors={sensors} onDragEnd={onDragEnd} collisionDetection={closestCenter}>
-                {/* ✅ colunas mais afastadas */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                     {COLUMNS.map((column) => {
                         const tasks = (byStatus[column.id] ?? []).map((t) => ({ ...t, checklist: t.checklist ?? [] }));
@@ -151,18 +152,18 @@ export function KanbanBoard() {
                                 <div className={`${column.bg} rounded-2xl p-4 flex items-center justify-between gap-3`}>
                                     <div>
                                         <h3 className="text-xl font-bold text-[#2C3E50]">{column.title}</h3>
-                                        <p className="text-sm text-[#546E7A]">{tasks.length} tasks</p>
+                                        <p className="text-sm text-[#546E7A]">{tasks.length} tarefa(s)</p>
                                     </div>
 
                                     <button type="button" onClick={() => openCreate(column.id)} className="btn-secondary px-5">
-                                        + Add
+                                        Adicionar
                                     </button>
                                 </div>
 
                                 <ColumnDroppable status={column.id} items={tasks.map((t) => t.id)}>
                                     <div className="space-y-3 min-h-[140px]">
                                         {loading ? (
-                                            <p className="text-sm text-[#546E7A]">Loading...</p>
+                                            <p className="text-sm text-[#546E7A]">Carregando...</p>
                                         ) : (
                                             tasks.map((task) => (
                                                 <SortableTaskCard
@@ -196,7 +197,10 @@ export function KanbanBoard() {
             )}
 
             <div className="bg-[#E1F5FE] border border-[#005A9C]/20 rounded-3xl p-6 text-center">
-                <p className="text-[#2C3E50] leading-relaxed">💡 Demo local: tarefas ainda não são salvas no Firebase.</p>
+                <p className="text-[#2C3E50] leading-relaxed inline-flex items-center gap-2 justify-center">
+                    <Lightbulb className="w-4 h-4" aria-hidden="true" />
+                    <span>Demo local: tarefas ainda não são salvas no Firebase.</span>
+                </p>
             </div>
         </div>
     );
@@ -244,7 +248,7 @@ function SortableTaskCard(props: {
 
     return (
         <div ref={setNodeRef} style={style} data-testid={`task-card-${props.task.id}`}>
-            <div className={`bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-2`}>
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-2">
                 <div className="flex items-start justify-between gap-3">
                     <button type="button" className="text-left flex-1" onClick={props.onEdit} aria-label="Editar tarefa">
                         <h4 className="font-bold text-[#2C3E50]">{props.task.title}</h4>
@@ -252,13 +256,12 @@ function SortableTaskCard(props: {
 
                     <div className="flex gap-2">
                         <button type="button" className="btn-ghost px-3 py-2" onClick={props.onEdit} aria-label="Editar">
-                            ✏️
+                            <Pencil className="w-4 h-4" aria-hidden="true" />
                         </button>
                         <button type="button" className="btn-ghost px-3 py-2" onClick={props.onDelete} aria-label="Excluir">
-                            🗑️
+                            <Trash2 className="w-4 h-4" aria-hidden="true" />
                         </button>
 
-                        {/* handle do drag */}
                         <button
                             type="button"
                             className="btn-ghost px-3 py-2 cursor-grab active:cursor-grabbing"
@@ -266,7 +269,7 @@ function SortableTaskCard(props: {
                             {...attributes}
                             {...listeners}
                         >
-                            ⠿
+                            <GripVertical className="w-4 h-4" aria-hidden="true" />
                         </button>
                     </div>
                 </div>
@@ -278,7 +281,9 @@ function SortableTaskCard(props: {
                         <p className="text-xs text-[#546E7A]">
                             Checklist: {progress.done}/{progress.total}
                         </p>
-                        <p className="text-sm text-[#2C3E50] font-medium truncate">{next ? `Próximo: ${next.text}` : "Tudo concluído ✅"}</p>
+                        <p className="text-sm text-[#2C3E50] font-medium truncate">
+                            {next ? `Próximo: ${next.text}` : "Tudo concluído"}
+                        </p>
                     </div>
                 )}
 
@@ -296,7 +301,9 @@ function PriorityPill({ priority }: { priority: TaskPriority }) {
                 ? "bg-[#FFF8E1] text-[#FFBF00]"
                 : "bg-[#E8F5E9] text-[#2E7D32]";
 
-    return <span className={`inline-block text-xs px-3 py-1 rounded-full ${cls}`}>{priority}</span>;
+    const label = priority === "high" ? "alta" : priority === "medium" ? "média" : "baixa";
+
+    return <span className={`inline-block text-xs px-3 py-1 rounded-full capitalize ${cls}`}>{label}</span>;
 }
 
 function TaskModal(props: {
@@ -368,9 +375,7 @@ function TaskModal(props: {
                 </div>
 
                 {error && (
-                    <div className="bg-[#FFEBEE] border border-[#C62828]/20 rounded-2xl p-3 text-sm text-[#2C3E50]">
-                        {error}
-                    </div>
+                    <div className="bg-[#FFEBEE] border border-[#C62828]/20 rounded-2xl p-3 text-sm text-[#2C3E50]">{error}</div>
                 )}
 
                 <div className="space-y-3">
@@ -381,25 +386,34 @@ function TaskModal(props: {
 
                     <label className="block text-sm font-medium text-[#2C3E50]">
                         Descrição
-                        <textarea className="input-field mt-2" value={description} onChange={(e) => setDescription(e.target.value)} rows={4} />
+                        <textarea
+                            className="input-field mt-2"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            rows={4}
+                        />
                     </label>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <label className="block text-sm font-medium text-[#2C3E50]">
                             Status
                             <select className="input-field mt-2" value={status} onChange={(e) => setStatus(e.target.value as TaskStatus)}>
-                                <option value="todo">To Do</option>
-                                <option value="doing">Doing</option>
-                                <option value="done">Done</option>
+                                <option value="todo">A fazer</option>
+                                <option value="doing">Em andamento</option>
+                                <option value="done">Concluída</option>
                             </select>
                         </label>
 
                         <label className="block text-sm font-medium text-[#2C3E50]">
                             Prioridade
-                            <select className="input-field mt-2" value={priority} onChange={(e) => setPriority(e.target.value as TaskPriority)}>
-                                <option value="low">low</option>
-                                <option value="medium">medium</option>
-                                <option value="high">high</option>
+                            <select
+                                className="input-field mt-2"
+                                value={priority}
+                                onChange={(e) => setPriority(e.target.value as TaskPriority)}
+                            >
+                                <option value="low">baixa</option>
+                                <option value="medium">média</option>
+                                <option value="high">alta</option>
                             </select>
                         </label>
                     </div>
@@ -431,7 +445,7 @@ function TaskModal(props: {
                                         <span className={`text-sm ${item.done ? "line-through text-[#546E7A]" : "text-[#2C3E50]"}`}>{item.text}</span>
                                     </label>
                                     <button type="button" className="btn-ghost px-3 py-2" onClick={() => removeItem(item.id)} aria-label="Remover item">
-                                        🗑️
+                                        <Trash2 className="w-4 h-4" aria-hidden="true" />
                                     </button>
                                 </li>
                             ))}
@@ -445,10 +459,10 @@ function TaskModal(props: {
                             className="input-field"
                             value={newItemText}
                             onChange={(e) => setNewItemText(e.target.value)}
-                            placeholder="Adicionar um passo pequeno…"
+                            placeholder="Adicionar um passo pequeno..."
                         />
                         <button type="button" className="btn-primary" onClick={addItem}>
-                            + Item
+                            Adicionar
                         </button>
                     </div>
                 </div>

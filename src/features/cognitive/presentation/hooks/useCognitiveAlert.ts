@@ -4,14 +4,11 @@ import * as React from "react";
 import { useCognitive } from "@/features/cognitive/presentation/CognitiveProvider";
 
 type UseCognitiveAlertOptions = {
-    /**
-     * Identificador do contexto (ex.: "tasks", "timer", "dashboard")
-     * Ajuda a manter timers independentes.
-     */
+    // Identifica o contexto (tipo: "tasks", "timer", "dashboard")
     key: string;
-    /** Texto do alerta (gentil e curto) */
+    // Texto do alerta (curto e direto)
     message: string;
-    /** Snooze em minutos (default: 5) */
+    // Quantos minutos para adiar (default: 5)
     snoozeMinutes?: number;
 };
 
@@ -30,17 +27,20 @@ export function useCognitiveAlert(options: UseCognitiveAlertOptions): UseCogniti
     const { key, message, snoozeMinutes = 5 } = options;
     const cognitive = useCognitive();
 
-    // ✅ Agora lê do "applied" (preferências realmente aplicadas no app)
+    // Lê as preferências já aplicadas no app
     const enabled = !!cognitive.applied.cognitiveAlertsEnabled;
     const thresholdMin =
-        typeof cognitive.applied.alertThresholdMinutes === "number"
-            ? cognitive.applied.alertThresholdMinutes
-            : 5;
+        typeof cognitive.applied.alertThresholdMinutes === "number" ? cognitive.applied.alertThresholdMinutes : 5;
 
     const [visible, setVisible] = React.useState(false);
 
+    // Marca quando a “visita” começou (cada tela pode ter seu timer)
     const startRef = React.useRef<number>(0);
+
+    // Timeout atual do alerta (pra cancelar/reagendar)
     const timeoutRef = React.useRef<number | null>(null);
+
+    // Até quando o snooze vale (timestamp)
     const snoozeUntilRef = React.useRef<number>(0);
 
     const clear = React.useCallback(() => {
@@ -61,7 +61,7 @@ export function useCognitiveAlert(options: UseCognitiveAlertOptions): UseCogniti
         const start = startRef.current || nowMs();
         const thresholdMs = thresholdMin * 60_000;
 
-        // Se estiver em snooze, respeitar
+        // Se estiver em snooze, o alerta só volta depois disso
         const snoozeUntil = snoozeUntilRef.current;
         const baseline = Math.max(start + thresholdMs, snoozeUntil);
 
@@ -72,7 +72,7 @@ export function useCognitiveAlert(options: UseCognitiveAlertOptions): UseCogniti
         }, delay);
     }, [clear, enabled, thresholdMin]);
 
-    // Inicia/Reseta quando a tela monta ou quando settings relevantes mudam
+    // Reinicia o timer quando trocar de tela (key) ou mudar config relevante
     React.useEffect(() => {
         startRef.current = nowMs();
         setVisible(false);
@@ -85,7 +85,6 @@ export function useCognitiveAlert(options: UseCognitiveAlertOptions): UseCogniti
 
     const dismiss = React.useCallback(() => {
         setVisible(false);
-        // Não volta a alertar nessa visita (até recarregar / remount)
         clear();
     }, [clear]);
 

@@ -5,29 +5,37 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCognitive } from "@/features/cognitive/presentation/CognitiveProvider";
 import { useTimer } from "@/features/timer/presentation/TimerProvider";
+import { Home, ListTodo, Timer, Brain, X } from "lucide-react";
 
-type NavItem = { href: string; label: string; icon: string };
+type NavItem = {
+    href: string;
+    label: string;
+    Icon: React.ComponentType<{ className?: string }>;
+};
 
 const ITEMS: readonly NavItem[] = [
-    { href: "/dashboard", label: "Dashboard", icon: "🏠" },
-    { href: "/tasks", label: "Tasks", icon: "📋" },
-    { href: "/timer", label: "Timer", icon: "⏱️" },
-    { href: "/panel", label: "Panel", icon: "🧠" },
+    { href: "/dashboard", label: "Início", Icon: Home },
+    { href: "/tasks", label: "Tarefas", Icon: ListTodo },
+    { href: "/timer", label: "Timer", Icon: Timer },
+    { href: "/panel", label: "Painel", Icon: Brain },
 ] as const;
 
 export function FocusDock() {
     const pathname = usePathname();
     const cognitive = useCognitive();
-
-    const focusMode = cognitive.applied.focusMode;
-    const [open, setOpen] = React.useState(false);
-    const [busy, setBusy] = React.useState(false);
     const { state, config } = useTimer();
 
+    const focusMode = cognitive.applied.focusMode;
+
+    const [open, setOpen] = React.useState(false);
+    const [busy, setBusy] = React.useState(false);
+
+    // Fecha o menu se o modo foco for desativado
     React.useEffect(() => {
         if (!focusMode) setOpen(false);
     }, [focusMode]);
 
+    // Permite fechar com ESC
     React.useEffect(() => {
         if (!open) return;
 
@@ -51,6 +59,7 @@ export function FocusDock() {
 
     const dockBottom = timerVisible ? "bottom-28" : "bottom-6";
 
+    // Sai do modo foco
     async function exitFocusMode() {
         setBusy(true);
         try {
@@ -61,7 +70,6 @@ export function FocusDock() {
         }
     }
 
-
     if (!focusMode) return null;
 
     return (
@@ -69,7 +77,7 @@ export function FocusDock() {
             {open && (
                 <button
                     type="button"
-                    aria-label="Close focus menu"
+                    aria-label="Fechar menu de foco"
                     className="fixed inset-0 z-[70] bg-black/20"
                     onClick={() => setOpen(false)}
                 />
@@ -78,28 +86,30 @@ export function FocusDock() {
             <div className={`fixed ${dockBottom} right-6 z-[80] flex flex-col items-end gap-3`}>
                 {open && (
                     <nav
-                        aria-label="Focus navigation"
+                        aria-label="Navegação do modo foco"
                         className="w-[260px] bg-white/95 backdrop-blur-xl border border-slate-100 rounded-3xl shadow-md p-3"
                     >
                         <div className="px-3 py-2">
-                            <p className="text-sm font-bold text-[#2C3E50]">Focus Menu</p>
-                            <p className="text-xs text-[#546E7A]">Quick navigation</p>
+                            <p className="text-sm font-bold text-[#2C3E50]">Menu de foco</p>
+                            <p className="text-xs text-[#546E7A]">Atalhos rápidos</p>
                         </div>
 
                         <div className="flex flex-col gap-2 p-2">
                             {ITEMS.map((item) => {
                                 const active = pathname === item.href;
+                                const Icon = item.Icon;
+
                                 return (
                                     <Link
                                         key={item.href}
                                         href={item.href}
                                         onClick={() => setOpen(false)}
-                                        className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-medium transition-colors ${active ? "bg-[#005A9C] text-white" : "text-[#2C3E50] hover:bg-slate-100"
+                                        className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-medium transition-colors ${active
+                                                ? "bg-[#005A9C] text-white"
+                                                : "text-[#2C3E50] hover:bg-slate-100"
                                             }`}
                                     >
-                                        <span className="text-xl" aria-hidden="true">
-                                            {item.icon}
-                                        </span>
+                                        <Icon className="w-5 h-5" aria-hidden="true" />
                                         <span>{item.label}</span>
                                     </Link>
                                 );
@@ -109,11 +119,12 @@ export function FocusDock() {
                         <div className="p-2 pt-3 border-t border-slate-100">
                             <button
                                 type="button"
-                                className="w-full btn-secondary"
+                                className="w-full btn-secondary flex items-center justify-center gap-2"
                                 onClick={() => void exitFocusMode()}
                                 disabled={busy}
                             >
-                                {busy ? "Exiting..." : "Exit Focus Mode"}
+                                <X className="w-4 h-4" />
+                                {busy ? "Saindo..." : "Sair do modo foco"}
                             </button>
                         </div>
                     </nav>
@@ -126,7 +137,7 @@ export function FocusDock() {
                     onClick={() => setOpen((v) => !v)}
                     aria-expanded={open}
                 >
-                    {open ? "Close" : "Menu"}
+                    {open ? "Fechar" : "Menu"}
                 </button>
             </div>
         </>

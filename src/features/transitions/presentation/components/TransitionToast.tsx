@@ -1,25 +1,28 @@
 "use client";
 
-import React from "react";
 import { useTransition } from "@/features/transitions/presentation/TransitionProvider";
 import { useCognitive } from "@/features/cognitive/presentation/CognitiveProvider";
 import { useTimer } from "@/features/timer/presentation/TimerProvider";
+import { X, ArrowRight } from "lucide-react";
 
 export function TransitionToast() {
     const { current, dismiss } = useTransition();
     const { applied } = useCognitive();
     const { state, config } = useTimer();
 
+    // Se não tiver toast ativo, não renderiza nada
     if (!current) return null;
 
     const focusMode = applied.focusMode;
     const tone = current.tone ?? "info";
 
+    // Classe do toast baseado no "tom" (info/success)
     const toneCls =
         tone === "success"
             ? "border-[#2E7D32]/20 bg-[#E8F5E9]"
             : "border-[#005A9C]/20 bg-[#E1F5FE]";
 
+    // Calcula o total de segundos da fase atual do Pomodoro
     const totalSecondsByPhase =
         state.phase === "focus"
             ? config.focusMinutes * 60
@@ -27,10 +30,11 @@ export function TransitionToast() {
                 ? config.shortBreakMinutes * 60
                 : config.longBreakMinutes * 60;
 
+    // Se já tem progresso (mesmo pausado), considera que o timer está “visível”
     const hasTimerSession = state.secondsLeft !== totalSecondsByPhase;
     const timerVisible = state.isRunning || hasTimerSession;
 
-    // se timer visível, sobe o toast
+    // Quando o TimerDock aparece embaixo, sobe o toast pra não sobrepor
     const bottomClass = timerVisible ? "bottom-24" : "bottom-4";
 
     return (
@@ -41,7 +45,7 @@ export function TransitionToast() {
                 aria-live="polite"
             >
                 <div className="min-w-0">
-                    <p className="text-xs text-[#546E7A]">Transição</p>
+                    <p className="text-xs text-[#546E7A]">Aviso</p>
                     <p className="font-medium text-[#2C3E50] truncate">{current.message}</p>
                 </div>
 
@@ -52,12 +56,18 @@ export function TransitionToast() {
                             className={focusMode ? "btn-ghost" : "btn-secondary"}
                             onClick={() => current.onAction?.()}
                         >
-                            {current.actionLabel}
+                            <span className="inline-flex items-center gap-2">
+                                <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                                {current.actionLabel}
+                            </span>
                         </button>
                     )}
 
                     <button type="button" className="btn-ghost" onClick={dismiss} aria-label="Fechar aviso">
-                        Fechar
+                        <span className="inline-flex items-center gap-2">
+                            <X className="w-4 h-4" aria-hidden="true" />
+                            Fechar
+                        </span>
                     </button>
                 </div>
             </div>

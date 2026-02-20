@@ -6,20 +6,20 @@ import { useAuth } from "@/features/auth/presentation/AuthProvider";
 
 type Mode = "login" | "signup";
 
+// Conversor de erros do Firebase para texto mais amigável
 function friendlyFirebaseError(err: unknown) {
     const msg = (err as any)?.message as string | undefined;
     const code = (err as any)?.code as string | undefined;
 
-    // Mensagens curtas (acessibilidade cognitiva)
     switch (code) {
         case "auth/invalid-email":
-            return "Email inválido.";
+            return "E-mail inválido.";
         case "auth/user-not-found":
         case "auth/wrong-password":
         case "auth/invalid-credential":
-            return "Email ou senha incorretos.";
+            return "E-mail ou senha incorretos.";
         case "auth/email-already-in-use":
-            return "Esse email já está em uso.";
+            return "Este e-mail já está em uso.";
         case "auth/weak-password":
             return "Senha fraca. Use pelo menos 6 caracteres.";
         case "auth/network-request-failed":
@@ -31,9 +31,11 @@ function friendlyFirebaseError(err: unknown) {
 
 export function AuthPage() {
     const router = useRouter();
+    // Vem do AuthProvider, funções pra login e cadastro
     const { signIn, signUp } = useAuth();
     const { status, signOut } = useAuth();
 
+    // Define se a tela está em login ou cadastro
     const [mode, setMode] = React.useState<Mode>("login");
     const isLogin = mode === "login";
 
@@ -47,7 +49,7 @@ export function AuthPage() {
     const [showConfirmPassword, setShowConfirmPassword] = React.useState<boolean>(false);
     const [formError, setFormError] = React.useState<string | null>(null);
 
-
+    // Alterna entre login e cadastro e limpa os campos extras
     function toggleMode() {
         setFormError(null);
         setLoading(false);
@@ -57,20 +59,22 @@ export function AuthPage() {
         setShowConfirmPassword(false);
     }
 
+    // Validação simples antes de chamar o Firebase
     function validate(): string | null {
-        if (!email.trim()) return "Please enter your email.";
-        if (!password) return "Please enter your password.";
+        if (!email.trim()) return "Digite seu e-mail.";
+        if (!password) return "Digite sua senha.";
 
         if (!isLogin) {
-            if (!name.trim()) return "Please enter your name.";
-            if (!confirmPassword) return "Please confirm your password.";
-            if (password !== confirmPassword) return "Passwords do not match.";
-            if (password.length < 6) return "Password must be at least 6 characters.";
+            if (!name.trim()) return "Digite seu nome.";
+            if (!confirmPassword) return "Confirme sua senha.";
+            if (password !== confirmPassword) return "As senhas não conferem.";
+            if (password.length < 6) return "A senha deve ter pelo menos 6 caracteres.";
         }
 
         return null;
     }
 
+    // Faz login/cadastro e redireciona pro dashboard
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
         setFormError(null);
@@ -90,8 +94,8 @@ export function AuthPage() {
             }
 
             router.replace("/dashboard");
-        } catch (err: any) {
-            setFormError(err?.message ?? "Falha ao autenticar");
+        } catch (err: unknown) {
+            setFormError(friendlyFirebaseError(err));
         } finally {
             setLoading(false);
         }
@@ -105,10 +109,10 @@ export function AuthPage() {
             <div className="max-w-md w-full mx-auto">
                 <header className="text-center mb-8">
                     <h1 className="text-3xl md:text-4xl font-bold text-[#2C3E50] mb-2">
-                        {isLogin ? "Welcome Back" : "Join MindEase"}
+                        {isLogin ? "Bem-vindo(a) de volta" : "Entrar no MindEase"}
                     </h1>
                     <p className="text-base text-[#546E7A]">
-                        {isLogin ? "Sign in to continue your journey" : "Create your calm space"}
+                        {isLogin ? "Faça login para continuar" : "Crie seu espaço com mais calma e foco"}
                     </p>
                 </header>
 
@@ -117,7 +121,7 @@ export function AuthPage() {
                         {!isLogin && (
                             <div>
                                 <label htmlFor="name" className="block text-sm font-medium text-[#2C3E50] mb-2">
-                                    Name
+                                    Nome
                                 </label>
                                 <input
                                     data-testid="auth-name-input"
@@ -125,7 +129,7 @@ export function AuthPage() {
                                     type="text"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
-                                    placeholder="Your name"
+                                    placeholder="Seu nome"
                                     className="input-field"
                                     autoComplete="name"
                                     required
@@ -135,7 +139,7 @@ export function AuthPage() {
 
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-[#2C3E50] mb-2">
-                                Email
+                                E-mail
                             </label>
                             <input
                                 data-testid="auth-email-input"
@@ -143,7 +147,7 @@ export function AuthPage() {
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                placeholder="your@email.com"
+                                placeholder="seu@email.com"
                                 className="input-field"
                                 autoComplete="email"
                                 inputMode="email"
@@ -153,7 +157,7 @@ export function AuthPage() {
 
                         <div>
                             <label htmlFor="password" className="block text-sm font-medium text-[#2C3E50] mb-2">
-                                Password
+                                Senha
                             </label>
 
                             <div className="relative">
@@ -174,9 +178,9 @@ export function AuthPage() {
                                     onClick={() => setShowPassword((v) => !v)}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-[#005A9C] hover:text-[#004C8C] transition-colors"
                                     aria-pressed={showPassword}
-                                    aria-label={showPassword ? "Hide password" : "Show password"}
+                                    aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                                 >
-                                    {showPassword ? "Hide" : "Show"}
+                                    {showPassword ? "Ocultar" : "Mostrar"}
                                 </button>
                             </div>
                         </div>
@@ -184,7 +188,7 @@ export function AuthPage() {
                         {!isLogin && (
                             <div>
                                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-[#2C3E50] mb-2">
-                                    Confirm Password
+                                    Confirmar senha
                                 </label>
 
                                 <div className="relative">
@@ -205,20 +209,20 @@ export function AuthPage() {
                                         onClick={() => setShowConfirmPassword((v) => !v)}
                                         className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-[#005A9C] hover:text-[#004C8C] transition-colors"
                                         aria-pressed={showConfirmPassword}
-                                        aria-label={showConfirmPassword ? "Hide password confirmation" : "Show password confirmation"}
+                                        aria-label={showConfirmPassword ? "Ocultar confirmação de senha" : "Mostrar confirmação de senha"}
                                     >
-                                        {showConfirmPassword ? "Hide" : "Show"}
+                                        {showConfirmPassword ? "Ocultar" : "Mostrar"}
                                     </button>
                                 </div>
 
-                                {/* feedback simples (visual, sem “toque especial” pesado) */}
+                                {/* Feedback rápido de conferência de senha */}
                                 {confirmPassword.length > 0 && (
                                     <p
                                         className={`mt-2 text-sm ${password === confirmPassword ? "text-[#2E7D32]" : "text-[#C62828]"
                                             }`}
                                         aria-live="polite"
                                     >
-                                        {password === confirmPassword ? "Passwords match." : "Passwords do not match."}
+                                        {password === confirmPassword ? "As senhas conferem." : "As senhas não conferem."}
                                     </p>
                                 )}
                             </div>
@@ -239,7 +243,7 @@ export function AuthPage() {
                             disabled={loading}
                             className="btn-primary w-full disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                            {loading ? "Please wait..." : isLogin ? "Sign In" : "Create Account"}
+                            {loading ? "Aguarde..." : isLogin ? "Entrar" : "Criar conta"}
                         </button>
                     </form>
 
@@ -250,7 +254,7 @@ export function AuthPage() {
                             onClick={toggleMode}
                             className="text-[#005A9C] hover:text-[#004C8C] font-medium transition-colors"
                         >
-                            {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+                            {isLogin ? "Não tem conta? Criar agora" : "Já tem conta? Entrar"}
                         </button>
                     </div>
                 </section>

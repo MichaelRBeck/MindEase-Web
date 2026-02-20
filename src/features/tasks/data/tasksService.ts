@@ -1,6 +1,7 @@
 import type { TasksRepository } from "../domain/tasksRepository";
-import type { Task } from "../domain/task";
+import type { TaskStatus } from "../domain/task";
 
+// Camada de serviço: centraliza chamadas do repo (fica fácil trocar Firebase/InMemory)
 export class TasksService {
     constructor(private repo: TasksRepository) { }
 
@@ -20,7 +21,8 @@ export class TasksService {
         return this.repo.remove(id);
     }
 
-    move(id: string, toStatus: any, index: number) {
+    // Move uma task de coluna e opcionalmente ajusta a posição
+    move(id: string, toStatus: TaskStatus, index: number) {
         return this.repo.move(id, toStatus, index);
     }
 }

@@ -1,13 +1,13 @@
 "use client";
 
-import * as React from "react";
-
+// Banner simples para alertas cognitivos (ex: lembrar de pausar)
 export function CognitiveAlertBanner(props: {
     visible: boolean;
     message: string;
     onDismiss: () => void;
     onSnooze: () => void;
 }) {
+    // Se não estiver visível, não renderiza nada
     if (!props.visible) return null;
 
     return (
@@ -23,6 +23,7 @@ export function CognitiveAlertBanner(props: {
                 </p>
 
                 <div className="flex gap-3 md:ml-auto">
+                    {/* Adia o alerta por alguns minutos */}
                     <button
                         type="button"
                         data-testid="cognitive-alert-snooze"
@@ -32,6 +33,7 @@ export function CognitiveAlertBanner(props: {
                         Snooze 5 min
                     </button>
 
+                    {/* Fecha o alerta manualmente */}
                     <button
                         type="button"
                         data-testid="cognitive-alert-dismiss"
