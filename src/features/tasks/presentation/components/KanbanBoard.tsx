@@ -195,13 +195,6 @@ export function KanbanBoard() {
                     onUpdate={handleUpdate}
                 />
             )}
-
-            <div className="bg-[#E1F5FE] border border-[#005A9C]/20 rounded-3xl p-6 text-center">
-                <p className="text-[#2C3E50] leading-relaxed inline-flex items-center gap-2 justify-center">
-                    <Lightbulb className="w-4 h-4" aria-hidden="true" />
-                    <span>Demo local: tarefas ainda não são salvas no Firebase.</span>
-                </p>
-            </div>
         </div>
     );
 }

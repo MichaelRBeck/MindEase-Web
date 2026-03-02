@@ -36,20 +36,29 @@ function stableStringify(p: CognitivePreferences) {
 // Converte “needs” do perfil em ajustes automáticos do painel cognitivo
 export function needsToCognitiveOverrides(profile: UserProfile): Partial<CognitivePreferences> {
     const { needs } = profile;
+    const patch: Partial<CognitivePreferences> = {};
 
-    return {
-        detailMode: needs.shortTexts ? "summary" : "detailed",
-        complexityLevel: needs.shortTexts ? "simple" : DEFAULT_COGNITIVE_PREFS.complexityLevel,
+    if (needs.shortTexts) {
+        patch.detailMode = "summary";
+        patch.complexityLevel = "simple";
+    }
 
-        animationsEnabled: needs.reduceStimuli ? false : DEFAULT_COGNITIVE_PREFS.animationsEnabled,
-        spacingMultiplier: needs.reduceStimuli ? 1.1 : DEFAULT_COGNITIVE_PREFS.spacingMultiplier,
-        lineSpacing: needs.reduceStimuli ? 1.6 : DEFAULT_COGNITIVE_PREFS.lineSpacing,
+    if (needs.reduceStimuli) {
+        patch.animationsEnabled = false;
+        patch.spacingMultiplier = 1.1;
+        patch.lineSpacing = 1.6;
+    }
 
-        contrastLevel: needs.highContrastPreferred ? "high" : DEFAULT_COGNITIVE_PREFS.contrastLevel,
+    if (needs.highContrastPreferred) {
+        patch.contrastLevel = "high";
+    }
 
-        cognitiveAlertsEnabled: needs.gentleReminders ? true : false,
-        alertThresholdMinutes: needs.gentleReminders ? 30 : DEFAULT_COGNITIVE_PREFS.alertThresholdMinutes,
-    };
+    if (needs.gentleReminders) {
+        patch.cognitiveAlertsEnabled = true;
+        patch.alertThresholdMinutes = 30;
+    }
+
+    return patch;
 }
 
 export function CognitiveProvider({ children }: { children: React.ReactNode }) {
@@ -167,18 +176,18 @@ export function CognitiveProvider({ children }: { children: React.ReactNode }) {
     // Só aplica “needs” do perfil se o usuário ainda não tiver prefs salvas
     async function syncNeedsFromProfile() {
         if (!repo || !profileRepo) return;
-        if (hasStoredPrefsRef.current) return;
 
         const profile = (await profileRepo.load()) ?? DEFAULT_USER_PROFILE;
         const overrides = needsToCognitiveOverrides(profile);
 
-        const next: CognitivePreferences = { ...DEFAULT_COGNITIVE_PREFS, ...overrides };
+        // aplica override por cima do que já está aplicado (não destrói escolhas)
+        const nextApplied: CognitivePreferences = { ...applied, ...overrides };
 
-        setApplied(next);
-        setDraft(next);
+        setApplied(nextApplied);
+        setDraft((prev) => ({ ...prev, ...overrides }));
 
-        hasStoredPrefsRef.current = true;
-        setHasStoredPrefs(true);
+        // opcional (recomendado): persistir pra refletir em outras telas/tabs
+        await repo.save(nextApplied);
     }
 
     React.useEffect(() => {

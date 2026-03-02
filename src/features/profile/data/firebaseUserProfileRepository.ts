@@ -1,4 +1,4 @@
-import type { UserProfile } from "@/features/profile/domain/userProfile";
+import { DEFAULT_USER_PROFILE, type UserProfile } from "@/features/profile/domain/userProfile";
 import type { UserProfileRepository } from "@/features/profile/domain/userProfileRepository";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { getClientFirestore } from "@/app/lib/firebase/client";
@@ -24,7 +24,22 @@ export class FirebaseUserProfileRepository implements UserProfileRepository {
         // Se não existir documento ainda, retorna null
         if (!snap.exists()) return null;
 
-        return snap.data() as UserProfile;
+        const raw = snap.data() as Partial<UserProfile>;
+
+        const normalized: UserProfile = {
+            ...DEFAULT_USER_PROFILE,
+            ...raw,
+            needs: { ...DEFAULT_USER_PROFILE.needs, ...(raw.needs ?? {}) },
+            routine: { ...DEFAULT_USER_PROFILE.routine, ...(raw.routine ?? {}) },
+            updatedAt: typeof raw.updatedAt === "number" ? raw.updatedAt : DEFAULT_USER_PROFILE.updatedAt,
+            displayName: typeof raw.displayName === "string" ? raw.displayName : DEFAULT_USER_PROFILE.displayName,
+            navigationProfile:
+                raw.navigationProfile === "simple" || raw.navigationProfile === "guided" || raw.navigationProfile === "power"
+                    ? raw.navigationProfile
+                    : DEFAULT_USER_PROFILE.navigationProfile,
+        };
+
+        return normalized;
     }
 
     async save(profile: UserProfile): Promise<void> {

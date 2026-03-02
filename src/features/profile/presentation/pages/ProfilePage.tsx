@@ -32,7 +32,16 @@ export function ProfilePage() {
         (async () => {
             const stored = await repo.load();
             if (!alive) return;
-            setDraft(stored ?? DEFAULT_USER_PROFILE);
+            const normalized: UserProfile = stored
+                ? {
+                    ...DEFAULT_USER_PROFILE,
+                    ...stored,
+                    needs: { ...DEFAULT_USER_PROFILE.needs, ...stored.needs },
+                    routine: { ...DEFAULT_USER_PROFILE.routine, ...stored.routine },
+                }
+                : DEFAULT_USER_PROFILE;
+
+            setDraft(normalized);
             setHydrated(true);
         })();
 
@@ -40,6 +49,15 @@ export function ProfilePage() {
             alive = false;
         };
     }, [repo]);
+
+    // helper
+    function updateNeeds<K extends keyof UserProfile["needs"]>(key: K, value: UserProfile["needs"][K]) {
+        setDraft((prev) => ({
+            ...prev,
+            needs: { ...prev.needs, [key]: value },
+            updatedAt: Date.now(),
+        }));
+    }
 
     function update(patch: Partial<UserProfile>) {
         setDraft((prev) => ({ ...prev, ...patch, updatedAt: Date.now() }));
@@ -152,7 +170,7 @@ export function ProfilePage() {
                             <input
                                 type="checkbox"
                                 checked={draft.needs.shortTexts}
-                                onChange={(e) => update({ needs: { ...draft.needs, shortTexts: e.target.checked } })}
+                                onChange={(e) => updateNeeds("shortTexts", e.target.checked)}
                             />
                             <span className="text-sm text-[#2C3E50]">
                                 Preferir textos curtos (ativa modo resumo e reduz complexidade)
@@ -163,7 +181,7 @@ export function ProfilePage() {
                             <input
                                 type="checkbox"
                                 checked={draft.needs.reduceStimuli}
-                                onChange={(e) => update({ needs: { ...draft.needs, reduceStimuli: e.target.checked } })}
+                                onChange={(e) => updateNeeds("reduceStimuli", e.target.checked)}
                             />
                             <span className="text-sm text-[#2C3E50]">
                                 Reduzir estímulos (desliga animações e aumenta conforto de leitura)
@@ -174,9 +192,7 @@ export function ProfilePage() {
                             <input
                                 type="checkbox"
                                 checked={draft.needs.highContrastPreferred}
-                                onChange={(e) =>
-                                    update({ needs: { ...draft.needs, highContrastPreferred: e.target.checked } })
-                                }
+                                onChange={(e) => updateNeeds("highContrastPreferred", e.target.checked)}
                             />
                             <span className="text-sm text-[#2C3E50]">Preferir alto contraste</span>
                         </label>
@@ -185,9 +201,7 @@ export function ProfilePage() {
                             <input
                                 type="checkbox"
                                 checked={draft.needs.gentleReminders}
-                                onChange={(e) =>
-                                    update({ needs: { ...draft.needs, gentleReminders: e.target.checked } })
-                                }
+                                onChange={(e) => updateNeeds("gentleReminders", e.target.checked)}
                             />
                             <span className="text-sm text-[#2C3E50]">Lembretes gentis (alertas cognitivos)</span>
                         </label>
